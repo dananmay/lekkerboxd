@@ -4,3 +4,5 @@ dist/
 cloudflare/tmdb-proxy/node_modules/
 .DS_Store
 npm-debug.log*
+
+Lekkerboxd.zip
