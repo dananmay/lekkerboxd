@@ -1,0 +1,22 @@
+[
+  {
+    "slug": "the-big-lebowski",
+    "title": "The Big Lebowski",
+    "year": 1998,
+    "rating": 4,
+    "liked": true,
+    "reviewed": false,
+    "posterUrl": "https://a.ltrbxd.com/resized/film-poster/5/1/9/3/5/the-big-lebowski-0-230-0-345-crop.jpg",
+    "letterboxdUrl": "https://letterboxd.com/film/the-big-lebowski/"
+  },
+  {
+    "slug": "in-the-mood-for-love",
+    "title": "In the Mood for Love",
+    "year": 2000,
+    "rating": 5,
+    "liked": false,
+    "reviewed": false,
+    "posterUrl": "https://a.ltrbxd.com/resized/film-poster/1/2/9/1/2/in-the-mood-for-love-0-230-0-345-crop.jpg",
+    "letterboxdUrl": "https://letterboxd.com/film/in-the-mood-for-love/"
+  }
+]

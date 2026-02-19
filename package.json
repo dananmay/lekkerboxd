@@ -1,0 +1,23 @@
+{
+  "name": "lekkerboxd",
+  "version": "1.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check:privacy": "node scripts/check-privacy-consistency.mjs",
+    "test:compile": "tsc -p tsconfig.test.json && node scripts/write-test-package-json.mjs",
+    "test": "npm run test:compile && node .test-dist/tests/run-tests.js",
+    "ci:check": "npm run check:privacy && npm run build && npm run test"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.3.0",
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@types/chrome": "^0.0.300",
+    "svelte": "^5.51.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}

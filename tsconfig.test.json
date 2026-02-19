@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".test-dist",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "isolatedModules": false
+  },
+  "include": [
+    "src/lib/utils/url-utils.ts",
+    "src/content/scraper/pagination.ts",
+    "src/types/letterboxd.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", ".test-dist"]
+}

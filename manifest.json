@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Lekkerboxd",
+  "description": "Get personalized movie recommendations based on your Letterboxd activity",
+  "version": "1.0.1",
+  "permissions": ["storage", "tabs", "cookies"],
+  "host_permissions": [
+    "*://*.letterboxd.com/*",
+    "https://api.themoviedb.org/*",
+    "https://lekkerboxd-tmdb-proxy.lekkerboxd.workers.dev/*",
+    "https://www.justwatch.com/*",
+    "https://www.reddit.com/*",
+    "https://www.taste.io/*"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.letterboxd.com/*"],
+      "js": ["src/content/main.ts"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_icon": {
+      "16": "static/icons/icon16.png",
+      "48": "static/icons/icon48.png",
+      "128": "static/icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "static/icons/icon16.png",
+    "48": "static/icons/icon48.png",
+    "128": "static/icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  }
+}
