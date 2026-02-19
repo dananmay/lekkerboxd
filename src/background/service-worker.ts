@@ -4,7 +4,12 @@ import { getSettings, saveSettings } from '../lib/storage/settings-store';
 import { getProfile, updateProfileFilms, saveProfile } from '../lib/storage/profile-store';
 import { getCachedRecommendations, cacheRecommendations } from '../lib/storage/cache-store';
 import { generateRecommendations } from '../lib/engine/recommendation-engine';
-import { getMovieWithRecommendations, isTmdbConfigured, resolveLetterboxdToTmdb } from '../lib/api/tmdb-client';
+import {
+  getMovieWithRecommendations,
+  isTmdbConfigured,
+  requiresUserTmdbKey,
+  resolveLetterboxdToTmdb,
+} from '../lib/api/tmdb-client';
 import { parseFilmsFromHTML, parsePaginationFromHTML } from '../content/scraper/pagination';
 import { getProfilePageUrl, letterboxdFilmUrl } from '../lib/utils/url-utils';
 import { resolveCanonicalFilmSlug } from '../lib/utils/letterboxd-slug-resolver';
@@ -451,7 +456,12 @@ async function handleGetRecommendations(
 ): Promise<unknown> {
   const settings = await getSettings();
   if (!isTmdbConfigured(settings.tmdbApiKey)) {
-    return { type: 'ERROR', error: 'TMDb is not configured. Add your TMDb key in settings to use direct mode.' };
+    return {
+      type: 'ERROR',
+      error: requiresUserTmdbKey()
+        ? 'TMDb is not configured for this GitHub build. Open Settings and add your TMDb API key.'
+        : 'TMDb is not configured. Add your TMDb key in settings to use direct mode.',
+    };
   }
 
   // Non-force path (popup reopening) — just return cache

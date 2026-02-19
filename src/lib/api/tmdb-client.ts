@@ -2,6 +2,7 @@ import type { TmdbMovie, TmdbMovieDetail, TmdbSearchResult } from '../../types/t
 import { RateLimiter } from '../utils/rate-limiter';
 import { fetchWithRetry } from '../utils/fetch-retry';
 import { getTmdbIdCache, saveTmdbIdMapping } from '../storage/cache-store';
+import { isStoreDistribution } from '../config/distribution';
 
 const DIRECT_BASE_URL = 'https://api.themoviedb.org/3';
 const DEFAULT_PROXY_BASE_URL = 'https://lekkerboxd-tmdb-proxy.lekkerboxd.workers.dev';
@@ -10,10 +11,18 @@ const DEFAULT_PROXY_BASE_URL = 'https://lekkerboxd-tmdb-proxy.lekkerboxd.workers
 const rateLimiter = new RateLimiter(10, 10);
 const inFlightRequests = new Map<string, Promise<unknown>>();
 
+export function canUseDefaultTmdbProxy(): boolean {
+  return isStoreDistribution();
+}
+
+export function requiresUserTmdbKey(): boolean {
+  return !canUseDefaultTmdbProxy();
+}
+
 function getEffectiveProxyBaseUrl(apiKey: string): string | null {
   // User-provided key explicitly opts into direct TMDb mode.
   if (apiKey.trim()) return null;
-  return DEFAULT_PROXY_BASE_URL;
+  return canUseDefaultTmdbProxy() ? DEFAULT_PROXY_BASE_URL : null;
 }
 
 export function isTmdbConfigured(apiKey: string): boolean {

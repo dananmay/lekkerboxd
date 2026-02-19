@@ -5,12 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/build-channel.mjs store",
+    "build:store": "node scripts/build-channel.mjs store",
+    "build:github": "node scripts/build-channel.mjs github",
+    "pack:store": "npm run build:store && node scripts/pack-release.mjs Lekkerboxd-store.zip",
+    "pack:github": "npm run build:github && node scripts/pack-release.mjs Lekkerboxd-github.zip",
+    "pack:all": "npm run pack:store && npm run pack:github",
     "preview": "vite preview",
     "check:privacy": "node scripts/check-privacy-consistency.mjs",
     "test:compile": "tsc -p tsconfig.test.json && node scripts/write-test-package-json.mjs",
     "test": "npm run test:compile && node .test-dist/tests/run-tests.js",
-    "ci:check": "npm run check:privacy && npm run build && npm run test"
+    "ci:check": "npm run ci:check:store",
+    "ci:check:store": "npm run check:privacy && npm run build:store && npm run test",
+    "ci:check:github": "npm run check:privacy && npm run build:github && npm run test"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.3.0",

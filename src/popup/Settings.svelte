@@ -1,6 +1,7 @@
 <script lang="ts">
   import tmdbLogoShort from '../../static/tmdb-logo-short.svg';
   import { JUSTWATCH_REGION_GROUPS } from '../lib/constants/justwatch-regions';
+  import { isGithubDistribution } from '../lib/config/distribution';
 
   interface Props {
     onSaved: () => void;
@@ -18,6 +19,7 @@
   let scanning = $state(false);
   let showAdvanced = $state(false);
   let scanStatus = $state('');
+  const githubDistribution = isGithubDistribution();
 
   async function loadSettings() {
     const settings = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
@@ -270,18 +272,24 @@
         <p class="slider-hint">Used by the eye button to open JustWatch in your country.</p>
 
         <div class="slider-header">
-          <span class="slider-label">Direct TMDb API key (optional)</span>
+          <span class="slider-label">
+            {githubDistribution ? 'TMDb API key (required for GitHub build)' : 'Direct TMDb API key (optional)'}
+          </span>
         </div>
         <input
           type="password"
           class="proxy-input"
-          placeholder="Only needed for direct TMDb mode"
+          placeholder={githubDistribution ? 'Required to fetch recommendations in GitHub build' : 'Only needed for direct TMDb mode'}
           bind:value={tmdbApiKey}
           onchange={saveTmdbApiKey}
           onblur={saveTmdbApiKey}
         />
         <p class="slider-hint">
-          Using your own key sends requests straight to TMDb and can avoid slowdowns if shared usage is high.
+          {#if githubDistribution}
+            GitHub builds use direct TMDb mode only, so this key is required.
+          {:else}
+            Using your own key sends requests straight to TMDb and can avoid slowdowns if shared usage is high.
+          {/if}
           <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">Get a TMDb API key</a>.
         </p>
       </div>

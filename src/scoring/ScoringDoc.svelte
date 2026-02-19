@@ -44,6 +44,14 @@
       how strongly the engine believes the film matches your taste, factoring in how many of your
       favourite films led to it, how many independent sources agree, and the film's critical reception.
     </p>
+    <div class="formula-card">
+      <div class="formula-label">Distribution Channels</div>
+      <div class="formula-note">
+        Lekkerboxd's recommendation pipeline is the same in both channels. The only distribution-level
+        difference is TMDb routing: Store builds default to the Lekkerboxd proxy (unless a user key is set),
+        while GitHub builds require a user TMDb key and use direct TMDb calls.
+      </div>
+    </div>
   </section>
 
   <!-- Section: Settings -->
@@ -103,9 +111,9 @@
         <h3>TMDb Mode</h3>
         <span class="setting-range">Advanced</span>
         <p>
-          TMDb requests use the default Lekkerboxd Cloudflare Worker proxy. This proxy URL is
-          fixed in the app. If you enter your own TMDb API key in Settings, direct TMDb mode is
-          used instead.
+          TMDb routing is channel-aware. In Store builds, requests use the default Lekkerboxd
+          Cloudflare Worker proxy unless you provide your own key. In GitHub builds, your own
+          TMDb API key is required and direct TMDb mode is always used.
         </p>
         <p>
           The proxy enforces an extension-origin allowlist via <code>ALLOWED_ORIGIN</code> to

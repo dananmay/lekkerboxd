@@ -9,7 +9,7 @@
       <span class="logo-text">Lekkerboxd</span>
     </div>
     <h1>Privacy Policy</h1>
-    <p class="subtitle">Last updated: February 17, 2026</p>
+    <p class="subtitle">Last updated: February 19, 2026</p>
   </header>
 
   <section class="section">
@@ -20,9 +20,10 @@
       film recommendations.
     </p>
     <p>
-      If you choose direct TMDb mode, your <strong>TMDb API key</strong> is stored locally and
-      used only for TMDb requests. By default, TMDb requests go through the Lekkerboxd
-      Cloudflare Worker proxy.
+      TMDb behavior depends on distribution channel. In the <strong>Chrome Web Store build</strong>,
+      TMDb requests use the Lekkerboxd Cloudflare Worker proxy by default unless you provide your own
+      TMDb key. In the <strong>GitHub build</strong>, your own TMDb key is required and requests go
+      directly to TMDb.
     </p>
   </section>
 
@@ -54,9 +55,10 @@
     </p>
     <p>
       Letterboxd, Reddit, and Taste.io requests are made directly from your browser.
-      TMDb requests are routed via the Lekkerboxd Cloudflare Worker proxy by default, or direct
-      if you provide your own TMDb key. Services receive only the film title queries required to find
-      recommendations, not your full profile dataset.
+      TMDb requests are routed via the Lekkerboxd Cloudflare Worker proxy in Store builds by default,
+      or directly to TMDb when a user key is provided. GitHub builds always use direct TMDb mode with
+      a user-provided key. Services receive only the film title queries required to find recommendations,
+      not your full profile dataset.
     </p>
     <p>
       If you use the "Add to Watchlist" button, Lekkerboxd also sends a direct authenticated
@@ -74,9 +76,9 @@
       recommendation results.
     </p>
     <p>
-      In default proxy mode, TMDb requests pass through Cloudflare infrastructure, which may
+      In Store-build proxy mode, TMDb requests pass through Cloudflare infrastructure, which may
       process standard request metadata (such as IP address and user agent) to deliver and secure
-      the service.
+      the service. GitHub builds do not depend on the Lekkerboxd proxy.
     </p>
     <p>
       If Letterboxd scraping or watchlist endpoints are temporarily unstable, the extension may
@@ -104,7 +106,7 @@
       <li><strong>cookies</strong> — to read your Letterboxd CSRF token cookie for watchlist actions you trigger</li>
       <li><strong>Host access to letterboxd.com</strong> — to read profile pages and perform watchlist actions</li>
       <li><strong>Host access to api.themoviedb.org</strong> — to fetch movie metadata and recommendation data</li>
-      <li><strong>Host access to lekkerboxd-tmdb-proxy.lekkerboxd.workers.dev</strong> — to reach the default Lekkerboxd Cloudflare TMDb proxy</li>
+      <li><strong>Host access to lekkerboxd-tmdb-proxy.lekkerboxd.workers.dev</strong> — Store build only, to reach the default Lekkerboxd Cloudflare TMDb proxy</li>
       <li><strong>Host access to justwatch.com</strong> — to validate and open JustWatch film/search pages when you click the eye button</li>
       <li><strong>Host access to reddit.com</strong> — to search Reddit for recommendation signals</li>
       <li><strong>Host access to taste.io</strong> — to fetch similar-film signals from Taste.io</li>
