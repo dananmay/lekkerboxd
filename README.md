@@ -46,6 +46,7 @@ This split is intentional:
 - Aggregates recommendation candidates from TMDb, Reddit, and Taste.io.
 - Applies filtering + scoring with popularity controls.
 - Keeps recommendation generation running in the background while popup is closed.
+- Runs film-page overlay recommendations as a single-seed query (current film): TMDb defines the candidate pool, and Reddit/Taste.io act as additional relevance signals with reduced fanout for speed.
 - Adds films to Letterboxd watchlist from the popup.
 - Opens JustWatch links with region-aware routing.
 - Includes in-extension docs:
@@ -59,6 +60,12 @@ This split is intentional:
 - `npm run pack:store` produces `Lekkerboxd-store.zip`.
 - `npm run pack:github` produces `Lekkerboxd-github.zip`.
 - `npm run pack:all` builds and packs both artifacts.
+- Build outputs are kept separate:
+  - Store build output: `dist-store/`
+  - GitHub build output: `dist-github/`
+- To test unpacked builds locally:
+  - Load `dist-store/` for Store behavior.
+  - Load `dist-github/` for GitHub behavior.
 
 ## Channel Behavior (TMDb)
 
@@ -77,7 +84,7 @@ This split is intentional:
 
 Requirements:
 
-- Node.js 20+ (20 LTS recommended)
+- Node.js 20.x (enforced)
 - npm
 - Chrome/Chromium browser
 
@@ -87,6 +94,25 @@ Commands:
 - `npm run ci:check:store`
 - `npm run ci:check:github`
 - `npm test`
+
+Build guardrails:
+
+- `npm run doctor` checks:
+  - Node version is exactly 20.x
+  - duplicate `* 2` artifacts are not present
+  - critical source/config files are not empty
+- `npm run build:store` and `npm run build:github` now run `doctor` automatically before building.
+- Builds are single-flight: a lock file prevents parallel build runs from different terminals.
+- `npm run rebuild:store` and `npm run rebuild:github` perform a full clean reinstall + build flow:
+  - remove `node_modules`, `dist*`, `.test-dist`
+  - run `npm ci`
+  - run one channel build
+
+Recommended local workflow:
+
+1. `nvm use` (reads `.nvmrc` -> Node 20)
+2. `npm run doctor`
+3. `npm run build:store` (or `npm run build:github`)
 
 ## Project Structure
 

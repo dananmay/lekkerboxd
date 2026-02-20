@@ -3,12 +3,10 @@ import type { ScrapedFilm, UserProfile } from '../types/letterboxd';
 import { getSettings, saveSettings } from '../lib/storage/settings-store';
 import { getProfile, updateProfileFilms, saveProfile } from '../lib/storage/profile-store';
 import { getCachedRecommendations, cacheRecommendations } from '../lib/storage/cache-store';
-import { generateRecommendations } from '../lib/engine/recommendation-engine';
+import { generateRecommendations, generateSingleSeedRecommendations } from '../lib/engine/recommendation-engine';
 import {
-  getMovieWithRecommendations,
   isTmdbConfigured,
   requiresUserTmdbKey,
-  resolveLetterboxdToTmdb,
 } from '../lib/api/tmdb-client';
 import { parseFilmsFromHTML, parsePaginationFromHTML } from '../content/scraper/pagination';
 import { getProfilePageUrl, letterboxdFilmUrl } from '../lib/utils/url-utils';
@@ -571,45 +569,59 @@ async function handleFilmRecommendations(
   if (!tabId || !isTmdbConfigured(settings.tmdbApiKey)) return;
 
   try {
-    const tmdbId = await resolveLetterboxdToTmdb(
+    const seed: ScrapedFilm = {
+      slug: filmSlug,
+      title: filmTitle,
+      year: filmYear,
+      rating: 5,
+      liked: true,
+      reviewed: false,
+      posterUrl: null,
+      letterboxdUrl: letterboxdFilmUrl(filmSlug),
+    };
+
+    const username = settings.letterboxdUsername?.trim() ?? '';
+    const profile = username ? await getProfile(username) : null;
+    const watchedFilms = ensureSeedPresentInWatched(profile?.watchedFilms ?? [], seed);
+    const overlayProfile: UserProfile = profile
+      ? { ...profile, watchedFilms }
+      : {
+        username,
+        scrapedAt: Date.now(),
+        watchedFilms,
+        likedFilms: [],
+        ratedFilms: [],
+        watchlist: [],
+      };
+
+    const result = await generateSingleSeedRecommendations(
+      overlayProfile,
       settings.tmdbApiKey,
-      filmSlug,
-      filmTitle,
-      filmYear,
+      seed,
+      undefined,
+      {
+        maxRecommendations: 8,
+        popularityFilter: settings.popularityFilter ?? 1,
+      },
     );
-    if (!tmdbId) return;
 
-    const detail = await getMovieWithRecommendations(settings.tmdbApiKey, tmdbId);
-    const recs = (detail.recommendations?.results ?? []).slice(0, 8).map(movie => ({
-      tmdbId: movie.id,
-      title: movie.title,
-      year: movie.release_date ? parseInt(movie.release_date.split('-')[0]) : 0,
-      overview: movie.overview,
-      posterPath: movie.poster_path,
-      tmdbRating: movie.vote_average,
-      genres: [] as string[],
-      score: Math.round(movie.vote_average * 10),
-      hits: [{ source: 'tmdb-recommendation' as const, seedFilmTitle: filmTitle, seedFilmSlug: filmSlug }],
-      onWatchlist: false,
-      letterboxdUrl: letterboxdFilmUrl(
-        movie.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, ''),
-      ),
-    }));
-
-    if (recs.length > 0) {
+    if (result.recommendations.length > 0) {
       await chrome.tabs.sendMessage(tabId, {
         type: 'RECOMMENDATIONS_READY',
-        result: {
-          recommendations: recs,
-          generatedAt: Date.now(),
-          seedCount: 1,
-          username: '',
-        },
+        result,
       }).catch(() => undefined);
     }
   } catch {
     // Film-specific recs are optional, fail silently
   }
+}
+
+function ensureSeedPresentInWatched(
+  watchedFilms: ScrapedFilm[],
+  seed: ScrapedFilm,
+): ScrapedFilm[] {
+  if (watchedFilms.some(film => film.slug === seed.slug)) return watchedFilms;
+  return [seed, ...watchedFilms];
 }
 
 // ── Watchlist: slug → LID resolution ──

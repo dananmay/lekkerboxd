@@ -8,15 +8,51 @@ import { letterboxdFilmUrl } from '../utils/url-utils';
 
 const DEFAULT_MAX_SEEDS = 15;
 const DEFAULT_MAX_RECOMMENDATIONS = 20;
-const TMDB_SEED_BATCH_SIZE = 10;
-const EXTERNAL_SEED_MIN = 4;
-const EXTERNAL_SEED_RATIO = 0.4;
-const REDDIT_RECS_PER_SEED = 6;
-const TASTEIO_RECS_PER_SEED = 10;
-const EXTERNAL_TITLE_RESOLVE_MIN = 40;
+const DEFAULT_FILM_PAGE_MAX_RECOMMENDATIONS = 8;
 const SEED_TOP_WEIGHT_BOOST = 0.2;
 const SEED_PRIORITY_BONUS_MAX = 10;
 const NORMALIZE_IF_MAX_ABOVE = 105;
+
+interface PipelineConfig {
+  tmdbSeedBatchSize: number;
+  tmdbRecommendationsPerSeed: number;
+  tmdbSimilarPerSeed: number;
+  externalSeedMin: number;
+  externalSeedRatio: number;
+  redditRecsPerSeed: number;
+  tasteioRecsPerSeed: number;
+  externalTitleResolveMultiplier: number;
+  externalTitleResolveMin: number;
+  externalCanIntroduceCandidates: boolean;
+}
+
+const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
+  tmdbSeedBatchSize: 10,
+  tmdbRecommendationsPerSeed: 20,
+  tmdbSimilarPerSeed: 20,
+  externalSeedMin: 4,
+  externalSeedRatio: 0.4,
+  redditRecsPerSeed: 6,
+  tasteioRecsPerSeed: 10,
+  externalTitleResolveMultiplier: 3,
+  externalTitleResolveMin: 40,
+  externalCanIntroduceCandidates: true,
+};
+
+const FILM_PAGE_PIPELINE_CONFIG: PipelineConfig = {
+  tmdbSeedBatchSize: 1,
+  tmdbRecommendationsPerSeed: 10,
+  tmdbSimilarPerSeed: 8,
+  externalSeedMin: 1,
+  externalSeedRatio: 1,
+  redditRecsPerSeed: 3,
+  tasteioRecsPerSeed: 4,
+  externalTitleResolveMultiplier: 2,
+  externalTitleResolveMin: 12,
+  // Keep film-page overlays tightly relevant to the current title:
+  // external sources can reinforce TMDb candidates but cannot introduce new ones.
+  externalCanIntroduceCandidates: false,
+};
 
 export interface RecommendationOptions {
   maxSeeds?: number;
@@ -55,8 +91,48 @@ export async function generateRecommendations(
   const maxRecommendations = options?.maxRecommendations ?? DEFAULT_MAX_RECOMMENDATIONS;
   const popularityFilter = options?.popularityFilter ?? 1;
 
-  // 1. Select seed films
   const seeds = selectSeeds(profile, maxSeeds);
+  return generateRecommendationsFromSeeds(
+    profile,
+    apiKey,
+    seeds,
+    maxRecommendations,
+    popularityFilter,
+    DEFAULT_PIPELINE_CONFIG,
+    onProgress,
+  );
+}
+
+export async function generateSingleSeedRecommendations(
+  profile: UserProfile,
+  apiKey: string,
+  seed: ScrapedFilm,
+  onProgress?: (stage: string, pct: number) => void,
+  options?: RecommendationOptions,
+): Promise<RecommendationResult> {
+  const maxRecommendations = options?.maxRecommendations ?? DEFAULT_FILM_PAGE_MAX_RECOMMENDATIONS;
+  const popularityFilter = options?.popularityFilter ?? 1;
+  return generateRecommendationsFromSeeds(
+    profile,
+    apiKey,
+    [seed],
+    maxRecommendations,
+    popularityFilter,
+    FILM_PAGE_PIPELINE_CONFIG,
+    onProgress,
+  );
+}
+
+async function generateRecommendationsFromSeeds(
+  profile: UserProfile,
+  apiKey: string,
+  seeds: ScrapedFilm[],
+  maxRecommendations: number,
+  popularityFilter: number,
+  pipeline: PipelineConfig,
+  onProgress?: (stage: string, pct: number) => void,
+): Promise<RecommendationResult> {
+  // 1. Select/provide seed films
   const seedWeightsBySlug = buildSeedWeightMap(seeds);
   onProgress?.('Selecting seed films', 10);
 
@@ -103,17 +179,23 @@ export async function generateRecommendations(
     .map(seed => ({ seed, tmdbId: tmdbIds.get(seed.slug) }))
     .filter((s): s is { seed: ScrapedFilm; tmdbId: number } => s.tmdbId !== undefined);
 
-  for (let i = 0; i < seedsWithIds.length; i += TMDB_SEED_BATCH_SIZE) {
-    const batch = seedsWithIds.slice(i, i + TMDB_SEED_BATCH_SIZE);
+  for (let i = 0; i < seedsWithIds.length; i += pipeline.tmdbSeedBatchSize) {
+    const batch = seedsWithIds.slice(i, i + pipeline.tmdbSeedBatchSize);
     const results = await Promise.allSettled(
       batch.map(({ tmdbId }) => getMovieWithRecommendations(apiKey, tmdbId)),
     );
     results.forEach((result, idx) => {
       if (result.status === 'fulfilled') {
-        addTmdbCandidates(candidates, result.value, batch[idx].seed, 'tmdb-recommendation');
+        addTmdbCandidates(
+          candidates,
+          result.value,
+          batch[idx].seed,
+          pipeline.tmdbRecommendationsPerSeed,
+          pipeline.tmdbSimilarPerSeed,
+        );
       }
     });
-    const processed = Math.min(i + TMDB_SEED_BATCH_SIZE, seedsWithIds.length);
+    const processed = Math.min(i + pipeline.tmdbSeedBatchSize, seedsWithIds.length);
     onProgress?.(
       `Processing seeds (${processed}/${seedsWithIds.length})`,
       20 + (processed / seedsWithIds.length) * 35,
@@ -125,7 +207,7 @@ export async function generateRecommendations(
   const sourceErrors: SourceError[] = [];
   const externalSeedCount = Math.min(
     seeds.length,
-    Math.max(EXTERNAL_SEED_MIN, Math.ceil(maxSeeds * EXTERNAL_SEED_RATIO)),
+    Math.max(pipeline.externalSeedMin, Math.ceil(seeds.length * pipeline.externalSeedRatio)),
   );
   const externalSeeds = seeds.slice(0, externalSeedCount);
 
@@ -167,7 +249,10 @@ export async function generateRecommendations(
   // 6. Resolve unique movie titles from Reddit + Taste.io to TMDb.
   // Cap volume so external lookups do not dominate runtime.
   const titlesToResolve = new Map<string, { title: string; year?: number }>();
-  const maxTitlesToResolve = Math.max(maxRecommendations * 3, EXTERNAL_TITLE_RESOLVE_MIN);
+  const maxTitlesToResolve = Math.max(
+    maxRecommendations * pipeline.externalTitleResolveMultiplier,
+    pipeline.externalTitleResolveMin,
+  );
 
   const addTitleToResolve = (key: string, value: { title: string; year?: number }): boolean => {
     if (titlesToResolve.has(key)) return true;
@@ -178,7 +263,7 @@ export async function generateRecommendations(
 
   for (const result of redditResults) {
     if (result.status !== 'fulfilled') continue;
-    for (const rec of result.value.recs.slice(0, REDDIT_RECS_PER_SEED)) {
+    for (const rec of result.value.recs.slice(0, pipeline.redditRecsPerSeed)) {
       const key = rec.movieTitle.toLowerCase();
       if (!addTitleToResolve(key, { title: rec.movieTitle })) break;
     }
@@ -188,7 +273,7 @@ export async function generateRecommendations(
   if (titlesToResolve.size < maxTitlesToResolve) {
     for (const result of tasteioResults) {
       if (result.status !== 'fulfilled') continue;
-      for (const rec of result.value.recs.slice(0, TASTEIO_RECS_PER_SEED)) {
+      for (const rec of result.value.recs.slice(0, pipeline.tasteioRecsPerSeed)) {
         const key = rec.title.toLowerCase();
         if (!addTitleToResolve(key, { title: rec.title, year: rec.year || undefined })) break;
       }
@@ -218,9 +303,10 @@ export async function generateRecommendations(
   for (const result of redditResults) {
     if (result.status !== 'fulfilled') continue;
     const { seed, recs } = result.value;
-    for (const rec of recs.slice(0, REDDIT_RECS_PER_SEED)) {
+    for (const rec of recs.slice(0, pipeline.redditRecsPerSeed)) {
       const movie = titleToMovie.get(rec.movieTitle.toLowerCase());
       if (!movie) continue;
+      if (!pipeline.externalCanIntroduceCandidates && !candidates.has(movie.id)) continue;
       addResolvedCandidate(candidates, movie, seed, 'reddit');
     }
   }
@@ -229,9 +315,10 @@ export async function generateRecommendations(
   for (const result of tasteioResults) {
     if (result.status !== 'fulfilled') continue;
     const { seed, recs } = result.value;
-    for (const rec of recs.slice(0, TASTEIO_RECS_PER_SEED)) {
+    for (const rec of recs.slice(0, pipeline.tasteioRecsPerSeed)) {
       const movie = titleToMovie.get(rec.title.toLowerCase());
       if (!movie) continue;
+      if (!pipeline.externalCanIntroduceCandidates && !candidates.has(movie.id)) continue;
       addResolvedCandidate(candidates, movie, seed, 'tasteio');
     }
   }
@@ -328,11 +415,18 @@ function addTmdbCandidates(
   candidates: Map<number, ScoredCandidate>,
   detail: TmdbMovieDetail,
   seed: ScrapedFilm,
-  _source: 'tmdb-recommendation' | 'tmdb-similar',
+  maxRecommendationsPerSeed: number,
+  maxSimilarPerSeed: number,
 ): void {
   const sources = [
-    { movies: detail.recommendations?.results ?? [], type: 'tmdb-recommendation' as const },
-    { movies: detail.similar?.results ?? [], type: 'tmdb-similar' as const },
+    {
+      movies: (detail.recommendations?.results ?? []).slice(0, maxRecommendationsPerSeed),
+      type: 'tmdb-recommendation' as const,
+    },
+    {
+      movies: (detail.similar?.results ?? []).slice(0, maxSimilarPerSeed),
+      type: 'tmdb-similar' as const,
+    },
   ];
 
   for (const { movies, type } of sources) {

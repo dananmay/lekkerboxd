@@ -1,19 +1,20 @@
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 
 const outputName = process.argv[2];
+const sourceDirArg = process.argv[3];
 if (!outputName || !outputName.endsWith('.zip')) {
-  console.error('Usage: node scripts/pack-release.mjs <output.zip>');
+  console.error('Usage: node scripts/pack-release.mjs <output.zip> [source-dir]');
   process.exit(1);
 }
 
 const root = process.cwd();
-const distDir = path.join(root, 'dist');
+const distDir = path.join(root, sourceDirArg || 'dist');
 const outputPath = path.join(root, outputName);
 
 if (!fs.existsSync(distDir)) {
-  console.error('dist/ not found. Run a build first.');
+  console.error(`${distDir} not found. Run a build first.`);
   process.exit(1);
 }
 
@@ -29,4 +30,3 @@ const zipResult = spawnSync('zip', ['-r', outputPath, '.'], {
 if (zipResult.status !== 0) {
   process.exit(zipResult.status ?? 1);
 }
-

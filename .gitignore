@@ -1,8 +1,11 @@
 node_modules/
 dist/
+dist-store/
+dist-github/
 .test-dist/
 cloudflare/tmdb-proxy/node_modules/
 .DS_Store
 npm-debug.log*
+.build-channel.lock.json
 
 Lekkerboxd.zip

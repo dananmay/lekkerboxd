@@ -61,6 +61,12 @@
       not your full profile dataset.
     </p>
     <p>
+      When you open a Letterboxd film page, Lekkerboxd may run a lightweight single-seed recommendation
+      query (using that film as the seed) to render the in-page overlay. This uses the same providers
+      (TMDb, Reddit, Taste.io) with reduced request fanout for speed. In this mode, TMDb provides the
+      candidate pool and external providers act as additional relevance signals.
+    </p>
+    <p>
       If you use the "Add to Watchlist" button, Lekkerboxd also sends a direct authenticated
       request to Letterboxd from your browser to add that specific film to your own watchlist.
       This uses your existing Letterboxd session cookie and CSRF token locally in the extension.

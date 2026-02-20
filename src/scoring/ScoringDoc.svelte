@@ -44,6 +44,13 @@
       how strongly the engine believes the film matches your taste, factoring in how many of your
       favourite films led to it, how many independent sources agree, and the film's critical reception.
     </p>
+    <p>
+      On Letterboxd film pages, the injected overlay runs a fast <strong>single-seed</strong> version
+      of this pipeline using the current film as the only seed. It still queries TMDb, Reddit, and
+      Taste.io, but with reduced per-source fanout to keep page-level recommendations responsive.
+      TMDb defines the candidate pool in this mode, while Reddit/Taste.io provide additional
+      relevance reinforcement.
+    </p>
     <div class="formula-card">
       <div class="formula-label">Distribution Channels</div>
       <div class="formula-note">
@@ -544,6 +551,10 @@
       Here's the full journey from your profile to your recommendations. Generation is handled by
       the extension service worker, so it can keep running while the popup is closed and results
       appear when you reopen it.
+    </p>
+    <p>
+      This pipeline view describes the full popup run. Film-page overlays use the same core scoring
+      and filtering path but force a single seed (the current film) with smaller source limits.
     </p>
 
     <div class="pipeline">
