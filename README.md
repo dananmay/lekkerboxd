@@ -16,9 +16,10 @@ If you install from GitHub and leave the TMDb key blank, recommendations will no
 ## Chrome Web Store Setup
 
 1. Install the extension from the Chrome Web Store.
-2. Visit Letterboxd while logged in so Lekkerboxd can detect your username.
-3. Open Lekkerboxd and click `Scan Profile`.
-4. Click `Get Recommendations`.
+2. Click the Chrome puzzle icon and pin Lekkerboxd for quick access.
+3. Visit Letterboxd while logged in so Lekkerboxd can detect your username.
+4. Open Lekkerboxd and click `Scan Profile`.
+5. Click `Get Recommendations`.
 
 No TMDb key is required for this build unless you want to force direct mode.
 
@@ -46,6 +47,7 @@ This split is intentional:
 - Aggregates recommendation candidates from TMDb, Reddit, and Taste.io.
 - Applies filtering + scoring with popularity controls.
 - Keeps recommendation generation running in the background while popup is closed.
+- Resolves canonical Letterboxd film slugs before popup render so ambiguous titles open correctly (for example year-disambiguated slugs).
 - Runs film-page overlay recommendations as a single-seed query (current film): TMDb defines the candidate pool, and Reddit/Taste.io act as additional relevance signals with reduced fanout for speed.
 - Adds films to Letterboxd watchlist from the popup.
 - Opens JustWatch links with region-aware routing.
