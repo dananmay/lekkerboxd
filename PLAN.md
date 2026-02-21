@@ -282,3 +282,130 @@ Reduce extension click-to-open delay in both dropdown and pop-out modes by prior
 4. Film pages no longer auto-trigger generation on load.
 5. On-demand film-page recommendations still render correctly.
 6. Watchlist, JustWatch, and Letterboxd open actions remain intact.
+
+## Phase 3 List-Based Seed Recommendations Plan (Up to 30 Films)
+
+### Summary
+Add a new recommendation mode where users can provide a public Letterboxd list URL and get suggestions from up to 30 films in that list, instead of using profile-selected seeds.
+List mode overrides profile-seed mode when a list URL is set.
+List films are weighted equally.
+If a scanned profile exists, watched-film exclusion still applies.
+
+### Goals
+1. Support recommendations from a user-provided Letterboxd list (`<=30` films).
+2. Keep existing profile-seed flow unchanged when no list URL is configured.
+3. Ensure deterministic popup links/behavior remain unchanged.
+4. Avoid expanding runtime message surface with new message types.
+
+### In Scope
+1. Settings support for storing a list URL.
+2. Service worker list fetch/parsing and seed preparation.
+3. Engine path for explicit seed arrays.
+4. Cache separation between profile mode and list mode.
+5. Popup/settings UX updates for list mode visibility and errors.
+6. Test coverage for URL parsing, list fetch behavior, and mode switching.
+
+### Out of Scope
+1. Private/authenticated list access support.
+2. New permissions or manifest changes.
+3. New background message types for list resolution.
+4. List-order priority weighting.
+
+### 1) Settings and interface updates
+
+#### 1.1 Settings schema
+1. Add `seedListUrl: string` to `Settings` in `src/lib/storage/settings-store.ts`.
+2. Default `seedListUrl` to empty string.
+3. Persist through existing `saveSettings(...)`.
+
+#### 1.2 Message typing
+1. Add optional `seedListUrl?: string` to `SaveSettingsMessage.settings` in `src/types/messages.ts`.
+2. Do not add any new message types.
+
+#### 1.3 Settings UI placement
+1. Add a visible list URL input in the normal settings panel in `src/popup/Settings.svelte` (not hidden under Advanced).
+2. Copy text: list mode uses first 30 films; clearing URL returns to profile mode.
+
+### 2) Letterboxd list URL parsing and fetch flow
+
+#### 2.1 Utility
+1. Add `src/lib/utils/letterboxd-list.ts`.
+2. Implement URL validation/canonicalization for public list pattern: `https://letterboxd.com/{user}/list/{slug}/`.
+3. Implement page URL builder for paginated list fetches.
+
+#### 2.2 Service worker list fetch
+1. In `src/background/service-worker.ts`, add helper to fetch list pages and parse films with existing `parseFilmsFromHTML(...)` and `parsePaginationFromHTML(...)`.
+2. Deduplicate by `slug`.
+3. Stop at 30 films maximum.
+4. Enforce minimum viable seeds (recommended: at least 3) with clear error if not met.
+
+### 3) Recommendation generation integration
+
+#### 3.1 Explicit-seed engine entrypoint
+1. Add exported explicit-seed wrapper in `src/lib/engine/recommendation-engine.ts`.
+2. Reuse existing internal seed pipeline; no scoring model fork.
+
+#### 3.2 Mode routing in generation
+1. In `executeGeneration(...)` in `src/background/service-worker.ts`:
+   1. If `seedListUrl` exists and is valid, run list mode.
+   2. Otherwise run existing profile-seed mode.
+2. In list mode, include watched/watchlist exclusion from scanned profile if available.
+3. Do not require liked/rated profile data for list mode.
+
+#### 3.3 Canonical URL pass
+1. Keep current canonical slug resolution pass for generated recommendations unchanged.
+
+### 4) Cache key separation for modes
+
+#### 4.1 Cache scope
+1. Extend cache helpers in `src/lib/storage/cache-store.ts` to support scope-aware keys (profile vs list).
+2. Use distinct list scope based on canonical list identity so list results do not overwrite profile results.
+
+#### 4.2 Fingerprint alignment
+1. Include mode-specific inputs in fingerprint/build validity checks in `src/background/service-worker.ts`.
+2. Preserve existing profile fingerprint behavior for profile mode.
+
+### 5) Popup behavior and UX text
+
+#### 5.1 Popup load/generate flow
+1. Keep existing `GET_RECOMMENDATIONS` message contract in `src/popup/Popup.svelte`.
+2. Update loading/status copy so it does not imply profile-only seeds while list mode is active.
+
+#### 5.2 Error handling
+1. Show actionable errors for invalid URL, inaccessible list, and insufficient films.
+2. Keep existing error bar rendering behavior.
+
+### 6) Tests and verification
+
+#### 6.1 Automated tests
+1. Extend `tests/run-tests.ts` with:
+   1. list URL parse/canonicalization tests,
+   2. list pagination URL builder tests,
+   3. seed cap/dedup tests,
+   4. mode-switch/cache-scope behavior tests (unit-level where practical).
+
+#### 6.2 Build checks
+1. `npx tsx tests/run-tests.ts`
+2. `npm run build:store`
+3. `npm run build:github`
+
+#### 6.3 Manual checks
+1. Empty `seedListUrl` uses existing profile mode.
+2. Valid list URL uses list mode and reports list-derived seed count.
+3. Clearing list URL restores profile-mode cached behavior.
+4. Watched exclusions still apply when profile exists.
+5. Links/open/watchlist actions behave unchanged.
+
+### 7) Rollout sequence
+1. Land settings schema + UI input.
+2. Land list URL utility + service worker fetch/parser integration.
+3. Land explicit-seed engine wrapper + generation routing.
+4. Land cache-scope updates.
+5. Add tests and run build/test matrix.
+6. Smoke test both store and GitHub distributions.
+
+### Assumptions and defaults
+1. Only public Letterboxd list URLs are supported.
+2. List mode overrides profile mode whenever list URL is non-empty and valid.
+3. List films are equally weighted.
+4. No new permissions, manifest changes, or runtime message types are required.
