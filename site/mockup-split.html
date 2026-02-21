@@ -3,8 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lekkerboxd — Movie recommendations from your Letterboxd taste</title>
-    <meta name="description" content="Lekkerboxd scans your Letterboxd history and finds films you'll actually want to watch — not just whatever's trending." />
+    <title>Lekkerboxd — Mockup</title>
     <style>
       :root {
         --bg: #0b0f13;
@@ -29,13 +28,13 @@
           linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
         color: var(--text);
         font-family: "Space Grotesk", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-        padding: 24px 0 80px;
+        padding: 24px 0 60px;
       }
 
       /* ── Topbar ── */
       .topbar {
         width: min(1100px, 92vw);
-        margin: 0 auto;
+        margin: 0 auto 0;
         padding: 4px 2px;
         display: flex;
         align-items: center;
@@ -184,13 +183,14 @@
         transform: translateY(-2px);
       }
 
+      .btn svg { opacity: 0.7; }
+
       .social-proof {
         display: flex;
         align-items: center;
         gap: 8px;
         color: #5f7a8e;
         font-size: 12.5px;
-        flex-wrap: wrap;
       }
 
       .social-proof-dot {
@@ -198,7 +198,6 @@
         height: 4px;
         border-radius: 50%;
         background: #2e4256;
-        flex-shrink: 0;
       }
 
       /* ── Right: popup mockup ── */
@@ -209,6 +208,7 @@
         position: relative;
       }
 
+      /* Ambient glow behind the popup */
       .popup-wrap::before {
         content: '';
         position: absolute;
@@ -227,6 +227,7 @@
           0 32px 80px rgba(0, 0, 0, 0.7),
           0 0 60px rgba(0, 224, 84, 0.05);
         overflow: hidden;
+        position: relative;
       }
 
       /* Popup header */
@@ -260,7 +261,10 @@
         letter-spacing: 0.4px;
       }
 
-      .p-gear { color: #567; opacity: 0.8; }
+      .p-gear {
+        color: #567;
+        opacity: 0.8;
+      }
 
       /* Profile card */
       .p-body {
@@ -284,7 +288,11 @@
         margin-bottom: 10px;
       }
 
-      .p-username { font-size: 13.5px; font-weight: 700; color: #fff; }
+      .p-username {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #fff;
+      }
 
       .p-chip {
         font-size: 10px;
@@ -298,6 +306,7 @@
       .p-stats {
         display: flex;
         align-items: center;
+        gap: 0;
         padding-top: 10px;
         border-top: 1px solid var(--popup-border);
       }
@@ -310,7 +319,11 @@
         gap: 1px;
       }
 
-      .p-stat-num { font-size: 14px; font-weight: 700; color: #def; }
+      .p-stat-num {
+        font-size: 14px;
+        font-weight: 700;
+        color: #def;
+      }
 
       .p-stat-label {
         font-size: 9px;
@@ -319,7 +332,11 @@
         letter-spacing: 0.5px;
       }
 
-      .p-stat-div { width: 1px; height: 22px; background: var(--popup-border); }
+      .p-stat-div {
+        width: 1px;
+        height: 22px;
+        background: var(--popup-border);
+      }
 
       /* Get recs button */
       .p-btn {
@@ -332,6 +349,7 @@
         font-size: 12.5px;
         font-weight: 700;
         text-align: center;
+        cursor: default;
       }
 
       /* Rec header */
@@ -359,7 +377,11 @@
       }
 
       /* Rec cards */
-      .p-rec-list { display: flex; flex-direction: column; gap: 6px; }
+      .p-rec-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
 
       .p-rec-card {
         display: flex;
@@ -373,16 +395,32 @@
 
       .p-rec-card.high { border-color: rgba(0, 224, 84, 0.38); }
       .p-rec-card.mid  { border-color: rgba(255, 140, 0, 0.45); }
+      .p-rec-card.low  { border-color: rgba(112, 170, 255, 0.4); }
 
       .p-poster {
         width: 46px;
         height: 70px;
         border-radius: 4px;
         flex-shrink: 0;
+        overflow: hidden;
+      }
+
+      .p-poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        /* Simulate a real poster with a gradient placeholder */
+      }
+
+      .p-poster-placeholder {
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
+        font-size: 16px;
       }
 
       .p-rec-info {
@@ -395,21 +433,52 @@
         padding-bottom: 6px;
       }
 
-      .p-rec-title { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .p-rec-year  { color: #9ab; font-weight: 500; }
-      .p-rec-meta  { font-size: 10.5px; color: #678; }
+      .p-rec-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-      .p-rec-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 1px; }
+      .p-rec-year { color: #9ab; font-weight: 500; }
 
-      .p-badge { font-size: 9px; padding: 2px 5px; border-radius: 8px; font-weight: 500; }
+      .p-rec-meta {
+        font-size: 10.5px;
+        color: #678;
+      }
+
+      .p-rec-badges {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        margin-top: 1px;
+      }
+
+      .p-badge {
+        font-size: 9px;
+        padding: 2px 5px;
+        border-radius: 8px;
+        font-weight: 500;
+      }
+
       .p-badge.source { background: #2c3440; color: #789; }
-      .p-badge.wl     { background: rgba(64, 188, 244, 0.15); color: #40bcf4; }
+      .p-badge.wl { background: rgba(64, 188, 244, 0.15); color: #40bcf4; }
 
-      .p-rec-because { font-size: 10px; color: #567; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .p-rec-because {
+        font-size: 10px;
+        color: #567;
+        margin-top: 1px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
       .p-score {
         position: absolute;
-        top: 8px; right: 8px;
+        top: 8px;
+        right: 8px;
         font-size: 9.5px;
         font-weight: 700;
         padding: 2px 6px;
@@ -417,13 +486,16 @@
         border: 1px solid;
       }
 
-      .p-score.high { background: rgba(0,224,84,0.22);   color: #00ff66; border-color: rgba(0,224,84,0.5); }
-      .p-score.mid  { background: rgba(255,140,0,0.22);  color: #ff9c00; border-color: rgba(255,140,0,0.52); }
+      .p-score.high { background: rgba(0,224,84,0.22); color: #00ff66; border-color: rgba(0,224,84,0.5); }
+      .p-score.mid  { background: rgba(255,140,0,0.22); color: #ff9c00; border-color: rgba(255,140,0,0.52); }
+      .p-score.low  { background: rgba(112,170,255,0.2); color: #8fc0ff; border-color: rgba(112,170,255,0.5); }
 
       .p-wl-btn {
         position: absolute;
-        bottom: 8px; right: 8px;
-        width: 20px; height: 20px;
+        bottom: 8px;
+        right: 8px;
+        width: 20px;
+        height: 20px;
         border-radius: 50%;
         border: 1px solid #2c3641;
         background: transparent;
@@ -452,30 +524,36 @@
         gap: 10px;
       }
 
-      .feature-icon { font-size: 22px; line-height: 1; }
-      .feature-title { font-size: 14px; font-weight: 700; color: #d4e4f0; }
-      .feature-body  { font-size: 13px; color: #6e8fa8; line-height: 1.6; }
+      .feature-icon {
+        font-size: 22px;
+        line-height: 1;
+      }
+
+      .feature-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #d4e4f0;
+      }
+
+      .feature-body {
+        font-size: 13px;
+        color: #6e8fa8;
+        line-height: 1.6;
+      }
 
       /* ── Responsive ── */
-      @media (max-width: 860px) {
+      @media (max-width: 760px) {
         .stage {
           grid-template-columns: 1fr;
           gap: 48px;
           padding: 40px 0;
-          min-height: unset;
         }
 
         .popup-wrap { order: -1; }
+
         .popup-chrome { width: min(340px, 100%); }
+
         .features { grid-template-columns: 1fr; }
-
-        .subtext { max-width: none; }
-      }
-
-      @media (max-width: 480px) {
-        .cta-row { flex-direction: column; }
-        .btn { width: 100%; justify-content: center; }
-        .nav-links { gap: 14px; }
       }
     </style>
   </head>
@@ -486,8 +564,8 @@
         <span>Lekkerboxd</span>
       </div>
       <nav class="nav-links" aria-label="Primary">
-        <a class="nav-link" href="https://github.com/dananmay/lekkerboxd/blob/main/PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy policy</a>
-        <a class="nav-link" href="mailto:support@lekkerboxd.com">Contact</a>
+        <a class="nav-link" href="#" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+        <a class="nav-link" href="#" target="_blank" rel="noopener noreferrer">Contact</a>
       </nav>
     </header>
 
@@ -512,14 +590,14 @@
 
         <div class="cta-row">
           <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/lekkerboxd/kilfhpgnabhobfinmljmgojmbndcpeph" target="_blank" rel="noopener noreferrer">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
               <path d="M12 8v8M8 12l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             Add to Chrome — it's free
           </a>
           <a class="btn" href="https://github.com/dananmay/lekkerboxd" target="_blank" rel="noopener noreferrer">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
             </svg>
             GitHub
@@ -536,8 +614,9 @@
       </div>
 
       <!-- Right: popup mockup -->
-      <div class="popup-wrap" aria-hidden="true">
+      <div class="popup-wrap">
         <div class="popup-chrome">
+          <!-- Header -->
           <div class="p-header">
             <div class="p-header-left">
               <span class="p-dot"></span>
@@ -549,7 +628,9 @@
             </svg>
           </div>
 
+          <!-- Body -->
           <div class="p-body">
+            <!-- Profile card -->
             <div class="p-profile-card">
               <div class="p-profile-row">
                 <span class="p-username">dhimant</span>
@@ -578,16 +659,23 @@
               </div>
             </div>
 
+            <!-- Get recs button -->
             <div class="p-btn">Get Recommendations</div>
 
+            <!-- Rec header -->
             <div class="p-rec-header">
               <span class="p-rec-count">20 SUGGESTIONS &bull; 15 SEEDS</span>
               <span class="p-rec-age">2H 14M AGO</span>
             </div>
 
+            <!-- Rec list -->
             <div class="p-rec-list">
+
+              <!-- Card 1: high score -->
               <div class="p-rec-card high">
-                <div class="p-poster" style="background: linear-gradient(135deg, #1a2535, #2d1f35);">🎬</div>
+                <div class="p-poster">
+                  <div class="p-poster-placeholder" style="background: linear-gradient(135deg, #1a2535 0%, #2d1f35 100%);">🎬</div>
+                </div>
                 <div class="p-rec-info">
                   <div class="p-rec-title">The Conformist <span class="p-rec-year">&bull; 1970</span></div>
                   <div class="p-rec-meta">Drama, Crime &middot; TMDb 8.0</div>
@@ -600,12 +688,17 @@
                 </div>
                 <div class="p-score high">94</div>
                 <div class="p-wl-btn">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  </svg>
                 </div>
               </div>
 
+              <!-- Card 2: high score -->
               <div class="p-rec-card high">
-                <div class="p-poster" style="background: linear-gradient(135deg, #141c2e, #1e2d1a);">🎬</div>
+                <div class="p-poster">
+                  <div class="p-poster-placeholder" style="background: linear-gradient(135deg, #141c2e 0%, #1e2d1a 100%);">🎬</div>
+                </div>
                 <div class="p-rec-info">
                   <div class="p-rec-title">Stalker <span class="p-rec-year">&bull; 1979</span></div>
                   <div class="p-rec-meta">Science Fiction, Drama &middot; TMDb 8.1</div>
@@ -613,16 +706,21 @@
                     <span class="p-badge source">TMDb</span>
                     <span class="p-badge source">Taste.io</span>
                   </div>
-                  <div class="p-rec-because">Because you liked Solaris &amp; 2001</div>
+                  <div class="p-rec-because">Because you liked Solaris & 2001</div>
                 </div>
                 <div class="p-score high">88</div>
                 <div class="p-wl-btn">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  </svg>
                 </div>
               </div>
 
+              <!-- Card 3: mid score, on watchlist -->
               <div class="p-rec-card mid">
-                <div class="p-poster" style="background: linear-gradient(135deg, #251a14, #1a2030);">🎬</div>
+                <div class="p-poster">
+                  <div class="p-poster-placeholder" style="background: linear-gradient(135deg, #251a14 0%, #1a2030 100%);">🎬</div>
+                </div>
                 <div class="p-rec-info">
                   <div class="p-rec-title">Caché <span class="p-rec-year">&bull; 2005</span></div>
                   <div class="p-rec-meta">Drama, Thriller &middot; TMDb 7.2</div>
@@ -635,16 +733,20 @@
                 </div>
                 <div class="p-score mid">76</div>
                 <div class="p-wl-btn" style="border-color: rgba(0,224,84,0.3);">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#00E054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17l-5-5" stroke="#00E054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
       </div>
     </main>
 
-    <section class="features" aria-label="Features">
+    <!-- Feature strip -->
+    <section class="features">
       <div class="feature-card">
         <div class="feature-icon">🎬</div>
         <div class="feature-title">Built on your history</div>
