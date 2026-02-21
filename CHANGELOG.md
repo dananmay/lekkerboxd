@@ -70,3 +70,22 @@ _Backfilled from commit history; early releases were not formally changelogged._
 
 ### Security
 - Distribution split established to reduce proxy abuse exposure for non-store installs.
+
+---
+
+## GitHub Release Template
+
+Use this for GitHub Releases:
+
+1. `## vX.Y.Z - <short title>`
+2. `### Downloads`
+3. `### Added`
+4. `### Changed`
+5. `### Fixed`
+6. `### Security`
+7. `### Verification`
+
+Include download artifact names explicitly:
+
+- `Lekkerboxd-store.zip`
+- `Lekkerboxd-github.zip`
