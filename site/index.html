@@ -259,7 +259,7 @@
       }
 
       .popup-chrome:hover {
-        transform: rotateY(-4deg) rotateX(2deg) translateY(-4px);
+        transform: rotateY(-8deg) rotateX(4deg) translateY(-8px);
         box-shadow:
           0 0 0 1px rgba(0,0,0,0.5),
           0 40px 90px rgba(0, 0, 0, 0.75),
@@ -832,7 +832,7 @@
 
       // Animate stat numbers with ease-out cubic
       (function () {
-        var duration = 9000;
+        var duration = 6000;
         var els = document.querySelectorAll('.p-stat-num[data-target]');
         var start = null;
         function step(ts) {
@@ -853,7 +853,7 @@
         scores.forEach(function (el, i) {
           var target = +el.dataset.score;
           var delay = 500 + i * 150;
-          var duration = 9000;
+          var duration = 6000;
           setTimeout(function () {
             var start = null;
             function step(ts) {
