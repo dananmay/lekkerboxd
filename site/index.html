@@ -6,12 +6,14 @@
     <title>Lekkerboxd</title>
     <style>
       :root {
-        --bg: #0f141a;
-        --panel: #151c24;
-        --line: #2b3644;
-        --text: #e8eef4;
+        --bg: #0b0f13;
+        --bg-2: #111823;
+        --panel: rgba(20, 28, 38, 0.72);
+        --line: #2f3b4d;
+        --text: #ecf2f8;
+        --muted: #90a4b8;
         --brand: #00e054;
-        --btn: #1f2a38;
+        --brand-deep: #00b744;
       }
 
       * {
@@ -21,21 +23,27 @@
       body {
         margin: 0;
         min-height: 100vh;
-        background: var(--bg);
+        background:
+          radial-gradient(900px 440px at 85% -10%, #1c4633 0%, transparent 60%),
+          radial-gradient(800px 420px at -10% 0%, #1f2f46 0%, transparent 60%),
+          linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
         color: var(--text);
         font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+        padding: 20px 0;
       }
 
       .topbar {
         width: min(1080px, 92vw);
-        margin: 20px auto 0;
-        padding: 14px 16px;
+        margin: 0 auto;
+        padding: 14px 18px;
         border: 1px solid var(--line);
-        border-radius: 12px;
+        border-radius: 14px;
         background: var(--panel);
+        backdrop-filter: blur(8px);
         display: flex;
         align-items: center;
         justify-content: space-between;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.32);
       }
 
       .brand {
@@ -43,7 +51,9 @@
         align-items: center;
         gap: 10px;
         font-weight: 700;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.04em;
+        font-size: 16px;
+        text-transform: uppercase;
       }
 
       .dot {
@@ -51,6 +61,7 @@
         height: 10px;
         border-radius: 50%;
         background: var(--brand);
+        box-shadow: 0 0 18px rgba(0, 224, 84, 0.85);
       }
 
       .actions {
@@ -62,14 +73,21 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 10px 14px;
-        border-radius: 10px;
+        padding: 10px 15px;
+        border-radius: 999px;
         border: 1px solid var(--line);
-        background: var(--btn);
+        background: rgba(16, 23, 32, 0.65);
         color: var(--text);
         text-decoration: none;
         font-size: 14px;
         font-weight: 600;
+        transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        border-color: #44566f;
+        background: rgba(21, 32, 45, 0.78);
       }
 
       .btn-primary {
@@ -78,11 +96,68 @@
         color: #082111;
       }
 
+      .btn-primary:hover {
+        background: var(--brand-deep);
+        border-color: var(--brand-deep);
+      }
+
+      .menu-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(16, 23, 32, 0.55);
+        color: var(--text);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 500;
+        transition: border-color 0.18s ease, background-color 0.18s ease;
+      }
+
+      .menu-link:hover {
+        border-color: #44566f;
+        background: rgba(21, 32, 45, 0.78);
+      }
+
+      .stage {
+        width: min(1080px, 92vw);
+        margin: 0 auto;
+        min-height: calc(100vh - 120px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 12px;
+      }
+
       @media (max-width: 640px) {
         .topbar {
           flex-direction: column;
           align-items: flex-start;
           gap: 12px;
+        }
+
+        .actions {
+          width: 100%;
+        }
+
+        .stage {
+          min-height: calc(100vh - 170px);
+        }
+
+        .cta-row {
+          width: 100%;
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+          min-width: 220px;
         }
       }
     </style>
@@ -94,9 +169,15 @@
         <span>Lekkerboxd</span>
       </div>
       <nav class="actions" aria-label="Primary">
-        <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/lekkerboxd/kilfhpgnabhobfinmljmgojmbndcpeph">Chrome Web Store</a>
-        <a class="btn" href="https://github.com/dananmay/lekkerboxd">GitHub</a>
+        <a class="menu-link" href="https://github.com/dananmay/lekkerboxd/blob/main/PRIVACY.md">Privacy policy</a>
+        <a class="menu-link" href="mailto:dhimanta02@gmail.com">Contact</a>
       </nav>
     </header>
+    <main class="stage">
+      <div class="cta-row" aria-label="Primary actions">
+        <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/lekkerboxd/kilfhpgnabhobfinmljmgojmbndcpeph">Chrome Web Store</a>
+        <a class="btn" href="https://github.com/dananmay/lekkerboxd">GitHub</a>
+      </div>
+    </main>
   </body>
 </html>
