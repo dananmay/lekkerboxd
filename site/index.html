@@ -244,26 +244,38 @@
       }
 
       .popup-chrome {
+        --tilt-x: 0deg;
+        --tilt-y: 0deg;
+        --lift: 0px;
+        --shadow-x: 0px;
+        --shadow-y: 32px;
+        --glow-size: 60px;
         width: 400px;
         background: var(--popup-bg);
         border-radius: 12px;
         border: 1px solid #3a4655;
         box-shadow:
           0 0 0 1px rgba(0,0,0,0.5),
-          0 32px 80px rgba(0, 0, 0, 0.7),
-          0 0 60px rgba(0, 224, 84, 0.05);
+          var(--shadow-x) var(--shadow-y) 90px rgba(0, 0, 0, 0.72),
+          0 0 var(--glow-size) rgba(0, 224, 84, 0.08);
         overflow: hidden;
-        transition: transform 0.35s ease-out, box-shadow 0.35s ease-out;
+        transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;
         transform-style: preserve-3d;
         perspective: 800px;
+        will-change: transform, box-shadow;
+        transform:
+          rotateY(var(--tilt-y))
+          rotateX(var(--tilt-x))
+          translateY(calc(-1 * var(--lift)));
       }
 
       .popup-chrome:hover {
-        transform: rotateY(-8deg) rotateX(4deg) translateY(-8px);
-        box-shadow:
-          0 0 0 1px rgba(0,0,0,0.5),
-          0 40px 90px rgba(0, 0, 0, 0.75),
-          0 0 80px rgba(0, 224, 84, 0.1);
+        /* Non-JS fallback hover state */
+        --tilt-x: 2deg;
+        --tilt-y: -5deg;
+        --lift: 6px;
+        --shadow-y: 40px;
+        --glow-size: 76px;
       }
 
       /* Popup header */
@@ -600,6 +612,27 @@
         .nav-links { gap: 14px; }
         .popup-chrome { width: 100%; }
       }
+
+      @media (prefers-reduced-motion: reduce) {
+        body { animation: none; }
+        .dot { animation: none; }
+        .popup-chrome, .popup-chrome:hover {
+          transition: none;
+          transform: none;
+          --tilt-x: 0deg;
+          --tilt-y: 0deg;
+          --lift: 0px;
+          --shadow-x: 0px;
+          --shadow-y: 32px;
+          --glow-size: 60px;
+        }
+        .badge, .headline, .subtext, .cta-row, .social-proof,
+        .popup-wrap, .p-rec-card, .feature-item, .feature-sep {
+          opacity: 1;
+          animation: none;
+        }
+        .headline em { animation: none; }
+      }
     </style>
   </head>
   <body>
@@ -800,6 +833,74 @@
     </footer>
 
     <script>
+      var prefersReducedMotion = window.matchMedia
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Cursor-reactive popup tilt + shadow.
+      (function () {
+        var popup = document.querySelector('.popup-chrome');
+        if (!popup || prefersReducedMotion) return;
+
+        var rafId = null;
+        var lastX = 0;
+        var lastY = 0;
+        var maxTiltX = 6;
+        var maxTiltY = 10;
+
+        function clamp01(n) {
+          return Math.max(0, Math.min(1, n));
+        }
+
+        function reset() {
+          popup.style.setProperty('--tilt-x', '0deg');
+          popup.style.setProperty('--tilt-y', '0deg');
+          popup.style.setProperty('--lift', '0px');
+          popup.style.setProperty('--shadow-x', '0px');
+          popup.style.setProperty('--shadow-y', '32px');
+          popup.style.setProperty('--glow-size', '60px');
+        }
+
+        function apply(clientX, clientY) {
+          var rect = popup.getBoundingClientRect();
+          var x = clamp01((clientX - rect.left) / rect.width);
+          var y = clamp01((clientY - rect.top) / rect.height);
+          var nx = (x - 0.5) * 2;
+          var ny = (y - 0.5) * 2;
+          var distance = Math.min(1, Math.hypot(nx, ny));
+          var centerBoost = 1 - distance;
+
+          var tiltY = nx * maxTiltY;
+          var tiltX = -ny * maxTiltX;
+          var lift = 6 + centerBoost * 3;
+          var shadowX = nx * 18;
+          var shadowY = 36 + Math.abs(ny) * 10;
+          var glowSize = 70 + centerBoost * 24;
+
+          popup.style.setProperty('--tilt-x', tiltX.toFixed(2) + 'deg');
+          popup.style.setProperty('--tilt-y', tiltY.toFixed(2) + 'deg');
+          popup.style.setProperty('--lift', lift.toFixed(2) + 'px');
+          popup.style.setProperty('--shadow-x', shadowX.toFixed(2) + 'px');
+          popup.style.setProperty('--shadow-y', shadowY.toFixed(2) + 'px');
+          popup.style.setProperty('--glow-size', glowSize.toFixed(2) + 'px');
+        }
+
+        function onPointerMove(e) {
+          if (e.pointerType && e.pointerType !== 'mouse') return;
+          lastX = e.clientX;
+          lastY = e.clientY;
+          if (rafId !== null) return;
+          rafId = requestAnimationFrame(function () {
+            rafId = null;
+            apply(lastX, lastY);
+          });
+        }
+
+        popup.addEventListener('pointermove', onPointerMove);
+        popup.addEventListener('pointerenter', onPointerMove);
+        popup.addEventListener('pointerleave', reset);
+        window.addEventListener('blur', reset);
+      })();
+
       // Random username with typing effect
       (function () {
         var names = [
@@ -809,6 +910,11 @@
         ];
         var name = names[Math.floor(Math.random() * names.length)];
         var el = document.getElementById('mock-username');
+        if (!el) return;
+        if (prefersReducedMotion) {
+          el.textContent = name;
+          return;
+        }
         el.textContent = '';
         var i = 0;
         var cursor = document.createElement('span');
@@ -834,6 +940,12 @@
       (function () {
         var duration = 6000;
         var els = document.querySelectorAll('.p-stat-num[data-target]');
+        if (prefersReducedMotion) {
+          els.forEach(function (el) {
+            el.textContent = String(el.dataset.target);
+          });
+          return;
+        }
         var start = null;
         function step(ts) {
           if (!start) start = ts;
@@ -850,6 +962,12 @@
       // Animate score badges with ease-out, timed to rec card entrance
       (function () {
         var scores = document.querySelectorAll('[data-score]');
+        if (prefersReducedMotion) {
+          scores.forEach(function (el) {
+            el.textContent = String(el.dataset.score);
+          });
+          return;
+        }
         scores.forEach(function (el, i) {
           var target = +el.dataset.score;
           var delay = 500 + i * 150;
