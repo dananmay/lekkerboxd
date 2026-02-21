@@ -39,6 +39,7 @@
           radial-gradient(700px 500px, #1c2d44 0%, transparent 55%),
           linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
         background-position: 80% -5%, -5% 10%, 0% 0%;
+        background-size: 200% 200%, 200% 200%, 100% 100%;
         animation: gradientDrift 12s ease-in-out infinite;
         color: var(--text);
         font-family: "Space Grotesk", "Avenir Next", "Segoe UI", system-ui, sans-serif;
@@ -820,7 +821,7 @@
           if (i < name.length) {
             cursor.before(name[i]);
             i++;
-            setTimeout(typeChar, 60 + Math.random() * 40);
+            setTimeout(typeChar, 120 + Math.random() * 80);
           } else {
             setTimeout(function () { cursor.remove(); }, 800);
           }
@@ -851,7 +852,7 @@
         scores.forEach(function (el, i) {
           var target = +el.dataset.score;
           var delay = 500 + i * 150;
-          var duration = 600;
+          var duration = 9000;
           setTimeout(function () {
             var start = null;
             function step(ts) {
