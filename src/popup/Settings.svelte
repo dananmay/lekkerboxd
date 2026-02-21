@@ -105,7 +105,7 @@
 
   function openPrivacyPolicy() {
     chrome.tabs.create({
-      url: chrome.runtime.getURL('src/privacy/index.html'),
+      url: 'https://lekkerboxd.com/privacy',
     });
   }
 
