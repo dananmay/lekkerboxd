@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy — Lekkerboxd</title>
+    <meta name="description" content="Privacy policy for the Lekkerboxd Chrome extension." />
+    <link rel="icon" type="image/png" href="./assets/lekkerboxd-favicon.png" />
+    <style>
+      :root {
+        --bg: #0b0f13;
+        --bg-2: #111823;
+        --line: #2f3b4d;
+        --text: #ecf2f8;
+        --muted: #90a4b8;
+        --brand: #00e054;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { background: var(--bg); }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
+        color: var(--text);
+        font-family: "Space Grotesk", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+        padding: 20px 0 0;
+      }
+
+      /* ── Topbar ── */
+      .topbar {
+        width: min(1100px, 92vw);
+        margin: 0 auto;
+        padding: 6px 2px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        font-size: 16px;
+        text-decoration: none;
+        color: var(--text);
+      }
+
+      .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--brand);
+        box-shadow: 0 0 18px rgba(0, 224, 84, 0.85);
+        flex-shrink: 0;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+      }
+
+      .nav-divider {
+        width: 1px;
+        height: 14px;
+        background: #3a4b5b;
+        opacity: 0.9;
+      }
+
+      .nav-link {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        border-bottom: 1px solid transparent;
+        transition: color 0.15s, border-color 0.15s;
+      }
+
+      .nav-link:hover { color: var(--text); border-color: #4a5f56; }
+      .nav-link.active { color: var(--text); border-color: var(--brand); }
+
+      /* ── Document ── */
+      .doc {
+        width: min(720px, 92vw);
+        margin: clamp(32px, 6vh, 64px) auto 0;
+        padding-bottom: 64px;
+        flex: 1;
+      }
+
+      .doc-header {
+        margin-bottom: 36px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .doc-header h1 {
+        font-size: clamp(24px, 3vw, 32px);
+        font-weight: 800;
+        color: #f0f6fc;
+        line-height: 1.2;
+        margin-bottom: 8px;
+      }
+
+      .subtitle {
+        font-size: 14px;
+        color: #5f7a8e;
+      }
+
+      .section {
+        margin-bottom: 32px;
+      }
+
+      .section h2 {
+        font-size: 17px;
+        font-weight: 700;
+        color: #ddeeff;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .section p {
+        font-size: 14.5px;
+        line-height: 1.7;
+        color: #9ab;
+        margin-bottom: 12px;
+      }
+
+      .section strong {
+        color: #ddeeff;
+        font-weight: 600;
+      }
+
+      .section code {
+        font-family: "SF Mono", "Fira Code", Menlo, monospace;
+        font-size: 12.5px;
+        background: #1b2028;
+        padding: 2px 7px;
+        border-radius: 4px;
+        color: var(--brand);
+      }
+
+      .section ul {
+        margin: 10px 0 14px;
+        padding-left: 22px;
+      }
+
+      .section li {
+        font-size: 14.5px;
+        line-height: 1.7;
+        color: #9ab;
+        margin-bottom: 5px;
+      }
+
+      .section li strong {
+        color: #ddeeff;
+      }
+
+      /* ── Footer ── */
+      .site-footer {
+        margin-top: auto;
+        padding: 20px 0;
+        text-align: center;
+        border-top: 1px solid var(--line);
+      }
+
+      .site-footer p {
+        font-size: 12px;
+        color: #456;
+      }
+
+      /* ── Responsive ── */
+      @media (max-width: 480px) {
+        .nav-links { gap: 14px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Lekkerboxd</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="nav-link active" href="./privacy.html">Privacy Policy</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a class="nav-link" href="mailto:support@lekkerboxd.com">Contact Us</a>
+      </nav>
+    </header>
+
+    <main class="doc">
+      <div class="doc-header">
+        <h1>Privacy Policy</h1>
+        <p class="subtitle">Last updated: February 19, 2026</p>
+      </div>
+
+      <section class="section">
+        <h2>What data does Lekkerboxd collect?</h2>
+        <p>
+          Lekkerboxd reads your <strong>public Letterboxd profile</strong> data: your watched films,
+          ratings, liked films, and watchlist. This data is used solely to generate personalized
+          film recommendations.
+        </p>
+        <p>
+          TMDb behavior depends on distribution channel. In the <strong>Chrome Web Store build</strong>,
+          TMDb requests use the Lekkerboxd Cloudflare Worker proxy by default unless you provide your own
+          TMDb key. In the <strong>GitHub build</strong>, your own TMDb key is required and requests go
+          directly to TMDb.
+        </p>
+      </section>
+
+      <section class="section">
+        <h2>Where is my data stored?</h2>
+        <p>
+          All data is stored <strong>locally on your device</strong> using Chrome's
+          <code>chrome.storage.local</code> API. Profile data, settings, and cached
+          recommendations are not stored in any Lekkerboxd application database.
+        </p>
+      </section>
+
+      <section class="section">
+        <h2>What third-party services are contacted?</h2>
+        <p>
+          When generating recommendations, the extension contacts the following services:
+        </p>
+        <ul>
+          <li><strong>Letterboxd</strong> — to scrape your public profile pages</li>
+          <li><strong>TMDb (The Movie Database)</strong> — to resolve film IDs, fetch metadata, and get recommendation/similar film data</li>
+          <li><strong>Reddit</strong> — to search film subreddits for human-curated recommendations</li>
+          <li><strong>Taste.io</strong> — to fetch algorithmically similar films</li>
+          <li><strong>JustWatch</strong> — only when you click the eye button to view regional streaming availability</li>
+        </ul>
+        <p>
+          JustWatch links use your configured JustWatch region setting. Auto mode opens the US direct
+          film page. Manual country mode first tries a direct page in that region and falls back to
+          regional search when needed.
+        </p>
+        <p>
+          Letterboxd, Reddit, and Taste.io requests are made directly from your browser.
+          TMDb requests are routed via the Lekkerboxd Cloudflare Worker proxy in Store builds by default,
+          or directly to TMDb when a user key is provided. GitHub builds always use direct TMDb mode with
+          a user-provided key. Services receive only the film title queries required to find recommendations,
+          not your full profile dataset.
+        </p>
+        <p>
+          When you open a Letterboxd film page, Lekkerboxd may run a lightweight single-seed recommendation
+          query (using that film as the seed) to render the in-page overlay. This uses the same providers
+          (TMDb, Reddit, Taste.io) with reduced request fanout for speed. In this mode, TMDb provides the
+          candidate pool and external providers act as additional relevance signals.
+        </p>
+        <p>
+          If you use the "Add to Watchlist" button, Lekkerboxd also sends a direct authenticated
+          request to Letterboxd from your browser to add that specific film to your own watchlist.
+          This uses your existing Letterboxd session cookie and CSRF token locally in the extension.
+        </p>
+      </section>
+
+      <section class="section">
+        <h2>Is my data shared with anyone?</h2>
+        <p>
+          Lekkerboxd does not use analytics, telemetry, or ad tracking. The extension does not
+          submit your full Letterboxd profile to a Lekkerboxd database. Third-party API providers
+          (and the TMDb proxy in default mode) receive only the request data needed to return
+          recommendation results.
+        </p>
+        <p>
+          In Store-build proxy mode, TMDb requests pass through Cloudflare infrastructure, which may
+          process standard request metadata (such as IP address and user agent) to deliver and secure
+          the service. GitHub builds do not depend on the Lekkerboxd proxy.
+        </p>
+        <p>
+          If Letterboxd scraping or watchlist endpoints are temporarily unstable, the extension may
+          enter a degraded mode that prefers cached data and fallback actions until normal behavior
+          resumes.
+        </p>
+      </section>
+
+      <section class="section">
+        <h2>How do I delete my data?</h2>
+        <p>
+          Open the extension popup, click the gear icon to open Settings, and click
+          <strong>Clear Cache</strong>. This removes all stored profile data, cached
+          recommendations, and settings from your browser. You can also uninstall the
+          extension, which automatically removes all stored data.
+        </p>
+      </section>
+
+      <section class="section">
+        <h2>Permissions</h2>
+        <p>Lekkerboxd requests the following browser permissions:</p>
+        <ul>
+          <li><strong>storage</strong> — to save your settings and cached data locally</li>
+          <li><strong>tabs</strong> — to open Letterboxd film pages and extension documentation when needed</li>
+          <li><strong>cookies</strong> — to read your Letterboxd CSRF token cookie for watchlist actions you trigger</li>
+          <li><strong>Host access to letterboxd.com</strong> — to read profile pages and perform watchlist actions</li>
+          <li><strong>Host access to api.themoviedb.org</strong> — to fetch movie metadata and recommendation data</li>
+          <li><strong>Host access to lekkerboxd-tmdb-proxy.lekkerboxd.workers.dev</strong> — Store build only, to reach the default Lekkerboxd Cloudflare TMDb proxy</li>
+          <li><strong>Host access to justwatch.com</strong> — to validate and open JustWatch film/search pages when you click the eye button</li>
+          <li><strong>Host access to reddit.com</strong> — to search Reddit for recommendation signals</li>
+          <li><strong>Host access to taste.io</strong> — to fetch similar-film signals from Taste.io</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h2>Changes to this policy</h2>
+        <p>
+          If this policy is updated, the changes will be included in a new version of the
+          extension. The "last updated" date at the top of this page will reflect any changes.
+        </p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Lekkerboxd &middot; Built for film lovers who want to dig deeper</p>
+    </footer>
+  </body>
+</html>
