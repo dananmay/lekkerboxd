@@ -22,14 +22,24 @@
 
       * { box-sizing: border-box; margin: 0; padding: 0; }
 
+      @keyframes gradientDrift {
+        0%   { background-position: 80% -5%, -5% 10%, 0% 0%; }
+        25%  { background-position: 60% 15%, 20% -10%, 0% 0%; }
+        50%  { background-position: 30% 5%,  50% 25%, 0% 0%; }
+        75%  { background-position: 70% -15%, 10% 40%, 0% 0%; }
+        100% { background-position: 80% -5%, -5% 10%, 0% 0%; }
+      }
+
       body {
         min-height: 100vh;
         display: flex;
         flex-direction: column;
         background:
-          radial-gradient(900px 500px at 80% -5%, #1a4530 0%, transparent 60%),
-          radial-gradient(700px 500px at -5% 10%, #1c2d44 0%, transparent 55%),
+          radial-gradient(900px 500px, #1a4530 0%, transparent 60%),
+          radial-gradient(700px 500px, #1c2d44 0%, transparent 55%),
           linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
+        background-position: 80% -5%, -5% 10%, 0% 0%;
+        animation: gradientDrift 12s ease-in-out infinite;
         color: var(--text);
         font-family: "Space Grotesk", "Avenir Next", "Segoe UI", system-ui, sans-serif;
         padding: 20px 0 0;
@@ -54,6 +64,11 @@
         font-size: 15px;
       }
 
+      @keyframes pulse {
+        0%, 100% { transform: scale(1);   box-shadow: 0 0 18px rgba(0, 224, 84, 0.85); }
+        50%      { transform: scale(1.35); box-shadow: 0 0 32px rgba(0, 224, 84, 1), 0 0 60px rgba(0, 224, 84, 0.5); }
+      }
+
       .dot {
         width: 10px;
         height: 10px;
@@ -61,6 +76,7 @@
         background: var(--brand);
         box-shadow: 0 0 18px rgba(0, 224, 84, 0.85);
         flex-shrink: 0;
+        animation: pulse 2s ease-in-out infinite;
       }
 
       .nav-links {
@@ -235,6 +251,17 @@
           0 32px 80px rgba(0, 0, 0, 0.7),
           0 0 60px rgba(0, 224, 84, 0.05);
         overflow: hidden;
+        transition: transform 0.35s ease-out, box-shadow 0.35s ease-out;
+        transform-style: preserve-3d;
+        perspective: 800px;
+      }
+
+      .popup-chrome:hover {
+        transform: rotateY(-4deg) rotateX(2deg) translateY(-4px);
+        box-shadow:
+          0 0 0 1px rgba(0,0,0,0.5),
+          0 40px 90px rgba(0, 0, 0, 0.75),
+          0 0 80px rgba(0, 224, 84, 0.1);
       }
 
       /* Popup header */
@@ -696,7 +723,7 @@
                   </div>
                   <div class="p-rec-because">Because you liked The Godfather</div>
                 </div>
-                <div class="p-score high">94</div>
+                <div class="p-score high" data-score="94">0</div>
                 <div class="p-wl-btn">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
                 </div>
@@ -717,7 +744,7 @@
                   </div>
                   <div class="p-rec-because">Because you liked Solaris &amp; 2001</div>
                 </div>
-                <div class="p-score high">88</div>
+                <div class="p-score high" data-score="88">0</div>
                 <div class="p-wl-btn">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
                 </div>
@@ -739,7 +766,7 @@
                   </div>
                   <div class="p-rec-because">Because you liked Certified Copy</div>
                 </div>
-                <div class="p-score mid">76</div>
+                <div class="p-score mid" data-score="76">0</div>
                 <div class="p-wl-btn" style="border-color: rgba(0,224,84,0.3);">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#00E054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
@@ -771,13 +798,35 @@
     </footer>
 
     <script>
-      var names = [
-        'filmfreak', 'reelwatcher', 'cinemajunkie', 'darkmovies',
-        'screenlog', 'moviepilot', 'framebyframe', 'critiqueen',
-        'silverscrn', 'watchthis', 'filmstack', 'celluloid'
-      ];
-      document.getElementById('mock-username').textContent =
-        names[Math.floor(Math.random() * names.length)];
+      // Random username with typing effect
+      (function () {
+        var names = [
+          'filmfreak', 'reelwatcher', 'cinemajunkie', 'darkmovies',
+          'screenlog', 'moviepilot', 'framebyframe', 'critiqueen',
+          'silverscrn', 'watchthis', 'filmstack', 'celluloid'
+        ];
+        var name = names[Math.floor(Math.random() * names.length)];
+        var el = document.getElementById('mock-username');
+        el.textContent = '';
+        var i = 0;
+        var cursor = document.createElement('span');
+        cursor.textContent = '|';
+        cursor.style.cssText = 'animation:blink 0.6s step-end infinite;font-weight:400;color:#567;';
+        var style = document.createElement('style');
+        style.textContent = '@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}';
+        document.head.appendChild(style);
+        el.appendChild(cursor);
+        function typeChar() {
+          if (i < name.length) {
+            cursor.before(name[i]);
+            i++;
+            setTimeout(typeChar, 60 + Math.random() * 40);
+          } else {
+            setTimeout(function () { cursor.remove(); }, 800);
+          }
+        }
+        setTimeout(typeChar, 400);
+      })();
 
       // Animate stat numbers with ease-out cubic
       (function () {
@@ -794,6 +843,27 @@
           if (t < 1) requestAnimationFrame(step);
         }
         requestAnimationFrame(step);
+      })();
+
+      // Animate score badges with ease-out, timed to rec card entrance
+      (function () {
+        var scores = document.querySelectorAll('[data-score]');
+        scores.forEach(function (el, i) {
+          var target = +el.dataset.score;
+          var delay = 500 + i * 150;
+          var duration = 600;
+          setTimeout(function () {
+            var start = null;
+            function step(ts) {
+              if (!start) start = ts;
+              var t = Math.min((ts - start) / duration, 1);
+              var ease = 1 - Math.pow(1 - t, 3);
+              el.textContent = Math.round(ease * target);
+              if (t < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+          }, delay);
+        });
       })();
     </script>
   </body>
