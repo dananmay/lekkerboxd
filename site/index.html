@@ -422,25 +422,32 @@
       /* ── Feature strip ── */
       .features {
         width: min(1100px, 92vw);
-        margin: 36px auto 40px;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-      }
-
-      .feature-card {
-        background: rgba(22, 32, 44, 0.5);
-        border: 1px solid #2a3748;
-        border-radius: 12px;
-        padding: 20px 20px;
+        margin: 32px auto 28px;
         display: flex;
-        flex-direction: column;
-        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        gap: 32px;
+        flex-wrap: wrap;
       }
 
-      .feature-icon  { font-size: 20px; line-height: 1; }
-      .feature-title { font-size: 13.5px; font-weight: 700; color: #d4e4f0; }
-      .feature-body  { font-size: 12.5px; color: #6e8fa8; line-height: 1.55; }
+      .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #7a96ad;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .feature-icon { font-size: 16px; line-height: 1; }
+
+      .feature-sep {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #2e4256;
+        flex-shrink: 0;
+      }
 
       /* ── Responsive ── */
       @media (max-width: 860px) {
@@ -535,7 +542,7 @@
           <div class="p-body">
             <div class="p-profile-card">
               <div class="p-profile-row">
-                <span class="p-username">dhimant</span>
+                <span class="p-username" id="mock-username">cinephile</span>
                 <span class="p-chip">Scanned 2h ago</span>
               </div>
               <div class="p-stats">
@@ -642,21 +649,30 @@
     </main>
 
     <section class="features" aria-label="Features">
-      <div class="feature-card">
-        <div class="feature-icon">🎬</div>
-        <div class="feature-title">Built on your history</div>
-        <div class="feature-body">Scans your watched films, ratings, and likes — uses your top-rated films as seeds for recommendations.</div>
+      <div class="feature-item">
+        <span class="feature-icon">🎬</span>
+        Built on your history
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">⭐</div>
-        <div class="feature-title">Multi-source scoring</div>
-        <div class="feature-body">Cross-references TMDb, Reddit threads, and Taste.io to surface films with genuine depth — not just blockbusters.</div>
+      <span class="feature-sep"></span>
+      <div class="feature-item">
+        <span class="feature-icon">⭐</span>
+        Multi-source scoring
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">✚</div>
-        <div class="feature-title">One-click watchlist</div>
-        <div class="feature-body">Add any recommendation directly to your Letterboxd watchlist without leaving the popup. No extra login required.</div>
+      <span class="feature-sep"></span>
+      <div class="feature-item">
+        <span class="feature-icon">✚</span>
+        One-click watchlist
       </div>
     </section>
+
+    <script>
+      var names = [
+        'filmfreak', 'reelwatcher', 'cinemajunkie', 'darkmovies',
+        'screenlog', 'moviepilot', 'framebyframe', 'critiqueen',
+        'silverscrn', 'watchthis', 'filmstack', 'celluloid'
+      ];
+      document.getElementById('mock-username').textContent =
+        names[Math.floor(Math.random() * names.length)];
+    </script>
   </body>
 </html>
