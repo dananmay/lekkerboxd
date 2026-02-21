@@ -187,21 +187,20 @@
       }
 
       .field.message-field {
-        flex: 1;
+        flex: 0 0 auto;
       }
 
       .field textarea {
-        flex: 1;
-        min-height: 80px;
+        flex: 0 0 auto;
+        min-height: 64px;
         resize: none;
       }
 
-      /* ── Bottom row: button + alt contact ── */
+      /* ── Form footer ── */
       .form-footer {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 16px;
+        justify-content: flex-start;
         flex-shrink: 0;
       }
 
@@ -237,23 +236,55 @@
         flex-shrink: 0;
       }
 
-      .alt-contact {
+      /* ── Direct contact block ── */
+      .contact-options {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(19, 25, 34, 0.65);
+      }
+
+      .contact-options-title {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        color: #b4c3d0;
+        margin-bottom: 8px;
+      }
+
+      .contact-options-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .contact-link {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border: 1px solid #36465a;
+        border-radius: 999px;
+        background: rgba(7, 12, 18, 0.5);
         font-size: 12.5px;
-        color: #4a6274;
-        text-align: right;
-        line-height: 1.5;
-      }
-
-      .alt-contact a {
-        color: var(--brand);
+        color: #d3e0ea;
         text-decoration: none;
-        font-weight: 500;
-        border-bottom: 1px solid transparent;
-        transition: border-color 0.15s;
+        font-weight: 600;
+        transition: border-color 0.15s, color 0.15s, background-color 0.15s;
       }
 
-      .alt-contact a:hover {
-        border-color: var(--brand);
+      .contact-link.primary {
+        color: var(--brand);
+        border-color: rgba(0, 224, 84, 0.45);
+      }
+
+      .contact-link:hover {
+        border-color: #4e667e;
+        background: rgba(16, 23, 32, 0.8);
+      }
+
+      .contact-link.primary:hover {
+        border-color: rgba(0, 224, 84, 0.75);
       }
 
       /* ── Footer ── */
@@ -275,8 +306,7 @@
         .nav-links { gap: 14px; }
         .row { grid-template-columns: 1fr; }
         .submit-btn { width: 100%; }
-        .form-footer { flex-direction: column; }
-        .alt-contact { text-align: center; }
+        .contact-options { margin-top: 12px; }
       }
     </style>
   </head>
@@ -335,12 +365,16 @@
             </svg>
             Send Message
           </button>
-          <span class="alt-contact">
-            or email <a href="mailto:support@lekkerboxd.com">support@lekkerboxd.com</a>
-            &middot; <a href="https://github.com/dananmay/lekkerboxd/issues" target="_blank" rel="noopener noreferrer">GitHub Issues</a>
-          </span>
         </div>
       </form>
+
+      <section class="contact-options" aria-label="Additional contact options">
+        <p class="contact-options-title">Other ways to contact us</p>
+        <div class="contact-options-links">
+          <a class="contact-link primary" href="mailto:support@lekkerboxd.com">Email support@lekkerboxd.com</a>
+          <a class="contact-link" href="https://github.com/dananmay/lekkerboxd/issues" target="_blank" rel="noopener noreferrer">Open a GitHub issue</a>
+        </div>
+      </section>
     </main>
 
     <footer class="site-footer">
