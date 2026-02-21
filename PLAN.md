@@ -173,3 +173,112 @@ No extension message/type API changes.
 2. Current traffic profile is approximately low-to-moderate consumer extension traffic.
 3. Slightly stricter validation is acceptable if it reduces abuse risk.
 4. Default thresholds above are the initial baseline and may be tuned after first-day telemetry.
+
+## Phase 2 Popup Open Latency Reduction Plan (UI-First, <500ms Target)
+
+### Summary
+Reduce extension click-to-open delay in both dropdown and pop-out modes by prioritizing instant UI paint, reducing popup startup round-trips, and removing background contention from automatic film-page recommendation generation.
+
+### Goals
+1. Keep popup open perception fast and stable in both launch modes.
+2. Target hydrated startup under `500ms` on a typical machine.
+3. Preserve existing recommendation quality, scoring, and background-generation behavior.
+4. Avoid broad architecture changes or backend dependencies.
+
+### In Scope
+1. Popup startup message consolidation and two-phase hydration.
+2. Launch-mode routing optimization for pop-out.
+3. Deferring film-page overlay generation until user-triggered.
+4. Lightweight popup rendering optimizations.
+5. Startup latency instrumentation and regression validation.
+
+### Out of Scope
+1. Scoring model changes.
+2. Recommendation-source fanout changes for main popup generation.
+3. TMDb proxy architecture changes.
+4. New permissions or host-permission expansions.
+
+### 1) Popup startup optimization
+
+#### 1.1 Add unified bootstrap message
+1. Add `GET_POPUP_BOOTSTRAP` message in `src/types/messages.ts`.
+2. Implement handler in `src/background/service-worker.ts`.
+3. Return a single payload containing:
+   - settings
+   - profile
+   - cached recommendations
+   - generating flag/status
+   - pending generation marker
+   - service health
+
+#### 1.2 Two-phase popup hydration
+1. In `src/popup/Popup.svelte`, render shell immediately from a direct `chrome.storage.local.get([...])`.
+2. After first paint, call `GET_POPUP_BOOTSTRAP` and reconcile state.
+3. Keep pending-generation resume logic, but execute after initial paint.
+
+#### 1.3 Fallback behavior
+1. If bootstrap call fails, retain storage-derived UI and surface non-blocking warning.
+2. Do not block opening on background worker wake-up.
+
+### 2) Launch-mode open-path optimization
+
+#### 2.1 Route by action mode in background
+1. In `src/background/service-worker.ts`, apply launch behavior using `chrome.action`:
+   - `popup` mode: `chrome.action.setPopup({ popup: 'src/popup/index.html' })`
+   - `window` mode: `chrome.action.setPopup({ popup: '' })` and open/focus via `chrome.action.onClicked`
+
+#### 2.2 Keep explicit window open path
+1. Retain existing `OPEN_APP_WINDOW` for settings button/manual open.
+2. Remove popup self-redirect dependency at startup in `src/popup/Popup.svelte`.
+
+#### 2.3 Sync on settings updates
+1. Re-apply action routing immediately when `launchMode` changes via `SAVE_SETTINGS`.
+
+### 3) Reduce background contention from film-page overlay
+
+#### 3.1 Defer film-page generation until requested
+1. In `src/content/main.ts`, remove automatic `GET_FILM_RECOMMENDATIONS` call on film page load.
+2. Add user-triggered action in overlay container to request recommendations on demand.
+3. Cache result per tab/page instance to avoid repeated calls in the same session.
+
+#### 3.2 Preserve feature behavior
+1. Keep current overlay rendering logic once results arrive.
+2. Keep single-seed engine path unchanged.
+
+### 4) Popup render-cost reductions
+
+#### 4.1 Recommendation list rendering
+1. Apply `content-visibility: auto` to recommendation cards/list container in `src/popup/Popup.svelte`.
+2. Add `contain-intrinsic-size` to reduce layout work before full paint.
+3. Keep `loading="lazy"` posters and current visual behavior.
+
+#### 4.2 No behavioral changes
+1. Keep recommendation ordering, scores, and actions unchanged.
+
+### 5) Startup instrumentation and acceptance criteria
+
+#### 5.1 Add timing metrics (debug only)
+1. `popup_mount_to_shell_paint_ms`
+2. `popup_bootstrap_roundtrip_ms`
+3. `popup_hydrated_total_ms`
+
+#### 5.2 Acceptance thresholds
+1. Popup shell visibly opens quickly in both modes with no spinner-gating.
+2. Hydrated state is typically under `500ms`.
+3. No regression in "generation continues while popup is closed".
+
+### 6) Verification plan
+
+#### 6.1 Automated
+1. `npm run build:store`
+2. `npm run build:github`
+3. `npm run ci:check:store`
+4. `npm run ci:check:github`
+
+#### 6.2 Manual smoke
+1. Dropdown mode cold/warm open latency check.
+2. Pop-out mode click opens/focuses without redirect lag.
+3. Reopen during active generation attaches to in-flight job.
+4. Film pages no longer auto-trigger generation on load.
+5. On-demand film-page recommendations still render correctly.
+6. Watchlist, JustWatch, and Letterboxd open actions remain intact.
