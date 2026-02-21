@@ -23,6 +23,8 @@
 
       body {
         min-height: 100vh;
+        display: flex;
+        flex-direction: column;
         background:
           radial-gradient(900px 500px at 80% -5%, #1a4530 0%, transparent 60%),
           radial-gradient(700px 500px at -5% 10%, #1c2d44 0%, transparent 55%),
@@ -66,6 +68,13 @@
         align-items: center;
       }
 
+      .nav-divider {
+        width: 1px;
+        height: 12px;
+        background: #3a4b5b;
+        opacity: 0.9;
+      }
+
       .nav-link {
         color: var(--muted);
         text-decoration: none;
@@ -81,6 +90,7 @@
       .stage {
         width: min(1100px, 92vw);
         margin: 28px auto 0;
+        flex: 1 0 auto;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 56px;
@@ -451,8 +461,9 @@
 
       .site-footer {
         width: 100%;
-        margin: 30px 0 24px;
+        margin-top: auto;
         padding-top: 12px;
+        padding-bottom: 12px;
       }
 
       /* ── Responsive ── */
@@ -465,6 +476,10 @@
 
         .popup-wrap { order: -1; }
         .popup-chrome { width: min(400px, 100%); }
+        .site-footer {
+          margin-top: 30px;
+          padding-bottom: 0;
+        }
         .features {
           justify-content: flex-start;
           gap: 10px;
@@ -491,6 +506,7 @@
       </div>
       <nav class="nav-links" aria-label="Primary">
         <a class="nav-link" href="https://github.com/dananmay/lekkerboxd/blob/main/PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+        <span class="nav-divider" aria-hidden="true"></span>
         <a class="nav-link" href="mailto:support@lekkerboxd.com">Contact Us</a>
       </nav>
     </header>
