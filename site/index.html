@@ -593,7 +593,8 @@
         .popup-chrome { width: min(400px, 100%); }
         .site-footer {
           margin-top: 30px;
-          padding-bottom: 0;
+          padding-bottom: 20px;
+          padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
         }
         .features {
           width: min(1100px, 94vw);
