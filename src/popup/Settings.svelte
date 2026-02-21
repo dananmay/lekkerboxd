@@ -97,9 +97,9 @@
     setTimeout(() => { scanStatus = ''; }, 3000);
   }
 
-  function openScoringDoc() {
+  function openContactPage() {
     chrome.tabs.create({
-      url: chrome.runtime.getURL('src/scoring/index.html'),
+      url: 'https://lekkerboxd.com/contact',
     });
   }
 
@@ -297,12 +297,12 @@
   </div>
 
   <div class="doc-links">
-    <button class="scoring-link" onclick={openScoringDoc}>
-      <span class="scoring-link-text">How it works</span>
+    <button class="scoring-link privacy" onclick={openPrivacyPolicy}>
+      <span class="scoring-link-text">Privacy Policy</span>
       <span class="scoring-link-arrow">&rarr;</span>
     </button>
-    <button class="scoring-link privacy" onclick={openPrivacyPolicy}>
-      <span class="scoring-link-text">Privacy policy</span>
+    <button class="scoring-link" onclick={openContactPage}>
+      <span class="scoring-link-text">Contact Us</span>
       <span class="scoring-link-arrow">&rarr;</span>
     </button>
   </div>
