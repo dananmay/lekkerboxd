@@ -596,10 +596,19 @@
           padding-bottom: 0;
         }
         .features {
-          justify-content: flex-start;
-          gap: 10px;
+          width: min(1100px, 94vw);
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
+          justify-items: center;
+          align-items: start;
+        }
+        .feature-item {
           flex-direction: column;
-          align-items: flex-start;
+          gap: 6px;
+          text-align: center;
+          font-size: 12px;
+          line-height: 1.25;
         }
         .feature-sep { display: none; }
         .subtext { max-width: none; }
