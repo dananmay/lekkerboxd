@@ -24,13 +24,14 @@
       html { background: var(--bg); }
 
       body {
-        min-height: 100vh;
+        height: 100vh;
         display: flex;
         flex-direction: column;
         background: linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
         color: var(--text);
         font-family: "Space Grotesk", "Avenir Next", "Segoe UI", system-ui, sans-serif;
         padding: 20px 0 0;
+        overflow: hidden;
       }
 
       /* ── Topbar ── */
@@ -41,6 +42,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-shrink: 0;
       }
 
       .brand {
@@ -90,47 +92,53 @@
 
       /* ── Document ── */
       .doc {
-        width: min(560px, 92vw);
-        margin: clamp(32px, 6vh, 64px) auto 0;
-        padding-bottom: 64px;
+        width: min(600px, 92vw);
+        margin: clamp(20px, 4vh, 48px) auto 0;
         flex: 1;
+        display: flex;
+        flex-direction: column;
       }
 
       .doc-header {
-        margin-bottom: 36px;
-        padding-bottom: 24px;
-        border-bottom: 1px solid var(--line);
+        margin-bottom: 20px;
       }
 
       .doc-header h1 {
-        font-size: clamp(24px, 3vw, 32px);
+        font-size: clamp(22px, 2.8vw, 28px);
         font-weight: 800;
         color: #f0f6fc;
         line-height: 1.2;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
       }
 
       .subtitle {
-        font-size: 14.5px;
+        font-size: 14px;
         color: #5f7a8e;
-        line-height: 1.6;
+        line-height: 1.5;
       }
 
       /* ── Form ── */
       .form {
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 14px;
+        flex: 1;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
       }
 
       .field {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 4px;
       }
 
       .field label {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
         color: #9ab;
         letter-spacing: 0.03em;
@@ -140,14 +148,14 @@
       .field select,
       .field textarea {
         width: 100%;
-        padding: 11px 14px;
+        padding: 9px 12px;
         background: var(--input-bg);
         border: 1px solid var(--input-border);
         border-radius: 8px;
         color: var(--text);
         font-family: inherit;
-        font-size: 14.5px;
-        line-height: 1.5;
+        font-size: 14px;
+        line-height: 1.4;
         outline: none;
         transition: border-color 0.15s, box-shadow 0.15s;
       }
@@ -168,8 +176,8 @@
         appearance: none;
         background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23567' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
-        background-position: right 14px center;
-        padding-right: 38px;
+        background-position: right 12px center;
+        padding-right: 34px;
         cursor: pointer;
       }
 
@@ -178,9 +186,23 @@
         color: var(--text);
       }
 
+      .field.message-field {
+        flex: 1;
+      }
+
       .field textarea {
-        min-height: 140px;
-        resize: vertical;
+        flex: 1;
+        min-height: 80px;
+        resize: none;
+      }
+
+      /* ── Bottom row: button + alt contact ── */
+      .form-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-shrink: 0;
       }
 
       .submit-btn {
@@ -188,17 +210,17 @@
         align-items: center;
         justify-content: center;
         gap: 8px;
-        padding: 13px 28px;
+        padding: 10px 24px;
         border-radius: 999px;
         border: none;
         background: var(--brand);
         color: #061a0c;
         font-family: inherit;
-        font-size: 14px;
+        font-size: 13.5px;
         font-weight: 700;
         cursor: pointer;
         transition: transform 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
-        width: fit-content;
+        flex-shrink: 0;
       }
 
       .submit-btn:hover {
@@ -215,17 +237,11 @@
         flex-shrink: 0;
       }
 
-      /* ── Alt contact ── */
       .alt-contact {
-        margin-top: 36px;
-        padding-top: 24px;
-        border-top: 1px solid var(--line);
-      }
-
-      .alt-contact p {
-        font-size: 13.5px;
-        color: #5f7a8e;
-        line-height: 1.6;
+        font-size: 12.5px;
+        color: #4a6274;
+        text-align: right;
+        line-height: 1.5;
       }
 
       .alt-contact a {
@@ -242,10 +258,10 @@
 
       /* ── Footer ── */
       .site-footer {
-        margin-top: auto;
-        padding: 20px 0;
+        padding: 12px 0;
         text-align: center;
         border-top: 1px solid var(--line);
+        flex-shrink: 0;
       }
 
       .site-footer p {
@@ -255,8 +271,12 @@
 
       /* ── Responsive ── */
       @media (max-width: 480px) {
+        body { overflow: auto; height: auto; min-height: 100vh; }
         .nav-links { gap: 14px; }
+        .row { grid-template-columns: 1fr; }
         .submit-btn { width: 100%; }
+        .form-footer { flex-direction: column; }
+        .alt-contact { text-align: center; }
       }
     </style>
   </head>
@@ -276,18 +296,19 @@
     <main class="doc">
       <div class="doc-header">
         <h1>Contact Us</h1>
-        <p class="subtitle">Bug report, feature request, or just want to say hi? Send us a message.</p>
+        <p class="subtitle">Bug report, feature request, or just want to say hi?</p>
       </div>
 
       <form class="form" id="contact-form" action="https://formspree.io/f/mlgwpwep" method="POST">
-        <div class="field">
-          <label for="name">Name</label>
-          <input type="text" id="name" name="name" placeholder="Your name" required />
-        </div>
-
-        <div class="field">
-          <label for="email">Email</label>
-          <input type="email" id="email" name="_replyto" placeholder="you@example.com" required />
+        <div class="row">
+          <div class="field">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" placeholder="Your name" required />
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="_replyto" placeholder="you@example.com" required />
+          </div>
         </div>
 
         <div class="field">
@@ -301,28 +322,25 @@
           </select>
         </div>
 
-        <div class="field">
+        <div class="field message-field">
           <label for="message">Message</label>
           <textarea id="message" name="message" placeholder="Tell us what's on your mind..." required></textarea>
         </div>
 
-        <button type="submit" class="submit-btn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Send Message
-        </button>
+        <div class="form-footer">
+          <button type="submit" class="submit-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Send Message
+          </button>
+          <span class="alt-contact">
+            or email <a href="mailto:support@lekkerboxd.com">support@lekkerboxd.com</a>
+            &middot; <a href="https://github.com/dananmay/lekkerboxd/issues" target="_blank" rel="noopener noreferrer">GitHub Issues</a>
+          </span>
+        </div>
       </form>
-
-      <div class="alt-contact">
-        <p>
-          You can also email us directly at
-          <a href="mailto:support@lekkerboxd.com">support@lekkerboxd.com</a>
-          or open an issue on
-          <a href="https://github.com/dananmay/lekkerboxd/issues" target="_blank" rel="noopener noreferrer">GitHub</a>.
-        </p>
-      </div>
     </main>
 
     <footer class="site-footer">
