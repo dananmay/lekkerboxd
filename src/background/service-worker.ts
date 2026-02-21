@@ -11,6 +11,7 @@ import {
 import { parseFilmsFromHTML, parsePaginationFromHTML } from '../content/scraper/pagination';
 import { getProfilePageUrl, letterboxdFilmUrl } from '../lib/utils/url-utils';
 import { resolveCanonicalFilmSlug } from '../lib/utils/letterboxd-slug-resolver';
+import { canonicalizeRecommendationUrls } from '../lib/utils/recommendation-url-canonicalizer';
 import { withStorageLock } from '../lib/storage/storage-mutex';
 import { ensureCacheSchemaMetadata } from '../lib/storage/cache-schema';
 import { debugWarn } from '../lib/utils/debug-log';
@@ -466,6 +467,17 @@ async function handleGetRecommendations(
   if (!forceRefresh) {
     const cached = await getCachedRecommendations(username);
     if (cached) {
+      const { changed } = await canonicalizeRecommendationUrls(cached, async (rec, currentSlug) => (
+        resolveCanonicalFilmSlugCached(
+          rec.tmdbId,
+          currentSlug,
+          rec.title,
+          rec.year > 0 ? rec.year : undefined,
+        )
+      ));
+      if (changed) {
+        await cacheRecommendations(cached);
+      }
       return { type: 'RECOMMENDATIONS_READY', result: cached };
     }
     return null;
@@ -529,6 +541,17 @@ async function executeGeneration(
         profile.scrapedAt,
       );
       if (cached.settingsFingerprint === currentFingerprint) {
+        const { changed } = await canonicalizeRecommendationUrls(cached, async (rec, currentSlug) => (
+          resolveCanonicalFilmSlugCached(
+            rec.tmdbId,
+            currentSlug,
+            rec.title,
+            rec.year > 0 ? rec.year : undefined,
+          )
+        ));
+        if (changed) {
+          await cacheRecommendations(cached);
+        }
         return { type: 'RECOMMENDATIONS_READY', result: cached };
       }
     }
@@ -539,6 +562,15 @@ async function executeGeneration(
       maxRecommendations: settings.maxRecommendations || 20,
       popularityFilter: settings.popularityFilter ?? 1,
     });
+
+    await canonicalizeRecommendationUrls(result, async (rec, currentSlug) => (
+      resolveCanonicalFilmSlugCached(
+        rec.tmdbId,
+        currentSlug,
+        rec.title,
+        rec.year > 0 ? rec.year : undefined,
+      )
+    ));
 
     // Stamp with fingerprint for future comparisons
     result.settingsFingerprint = buildFingerprint(

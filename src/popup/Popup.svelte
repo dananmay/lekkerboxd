@@ -383,15 +383,8 @@
     return match ? match[1] : '';
   }
 
-  function normalizeLegacyYearSlug(slug: string): string {
-    return slug.replace(/-\d{4}$/, '');
-  }
-
   function recLetterboxdUrl(rec: Recommendation): string {
-    const rawSlug = extractSlugFromUrl(rec.letterboxdUrl);
-    if (!rawSlug) return rec.letterboxdUrl;
-    const normalizedSlug = normalizeLegacyYearSlug(rawSlug);
-    return `https://letterboxd.com/film/${normalizedSlug}/`;
+    return rec.letterboxdUrl;
   }
 
   function openLetterboxdHome(): void {
@@ -501,14 +494,18 @@
               <path d="M15.5 7.5a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0zM4 19.5c0-3.6 3.6-6.5 8-6.5s8 2.9 8 6.5" stroke="#567" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
           </div>
-          <h3 class="welcome-title">Two steps to get started</h3>
+          <h3 class="welcome-title">Three steps to get started</h3>
           <div class="onboarding-steps">
             <div class="onboarding-step">
               <span class="onboarding-num">1</span>
-              <span>Open Letterboxd and log into your account</span>
+              <span>Click the Chrome puzzle icon and pin Lekkerboxd</span>
             </div>
             <div class="onboarding-step">
               <span class="onboarding-num">2</span>
+              <span>Open Letterboxd and log into your account</span>
+            </div>
+            <div class="onboarding-step">
+              <span class="onboarding-num">3</span>
               <span>Come back here and refresh account detection</span>
             </div>
           </div>

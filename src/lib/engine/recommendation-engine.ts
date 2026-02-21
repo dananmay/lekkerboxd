@@ -444,13 +444,14 @@ export function slugifyLetterboxdTitle(title: string): string {
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+    .replace(/['\u2018\u2019\u02BC]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/-+$/, '')
     .replace(/^-+/, '');
 }
 
 function generateLegacyAsciiSlug(title: string): string {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '').replace(/^-+/, '');
+  return title.toLowerCase().replace(/['\u2018\u2019\u02BC]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '').replace(/^-+/, '');
 }
 
 export function normalizeForComparison(title: string): string {

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Lekkerboxd",
   "description": "Get personalized movie recommendations based on your Letterboxd activity",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "permissions": ["storage", "tabs", "cookies"],
   "host_permissions": [
     "*://*.letterboxd.com/*",

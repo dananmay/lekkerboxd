@@ -20,6 +20,8 @@ import {
   parseTitleAndYear as parseResolverTitleAndYear,
   extractCanonicalSlugFromFilmUrl,
 } from '../src/lib/utils/letterboxd-slug-resolver';
+import { canonicalizeRecommendationUrls } from '../src/lib/utils/recommendation-url-canonicalizer';
+import type { RecommendationResult } from '../src/types/recommendation';
 
 declare const process: any;
 declare const require: any;
@@ -27,7 +29,7 @@ declare const require: any;
 const fs = require('fs');
 const path = require('path');
 
-type TestFn = () => void;
+type TestFn = () => void | Promise<void>;
 
 const tests: Array<{ name: string; fn: TestFn }> = [];
 
@@ -88,6 +90,26 @@ test('recommendation engine: normalizeForComparison handles punctuation variants
     slugifyLetterboxdTitle('Marketa Lazarová'),
     'marketa-lazarova',
     'slugifyLetterboxdTitle should transliterate accented characters',
+  );
+  assertEqual(
+    slugifyLetterboxdTitle('Miller\'s Crossing'),
+    'millers-crossing',
+    'slugifyLetterboxdTitle should strip ASCII apostrophes',
+  );
+  assertEqual(
+    slugifyLetterboxdTitle('Miller’s Crossing'),
+    'millers-crossing',
+    'slugifyLetterboxdTitle should strip curly apostrophes',
+  );
+  assertEqual(
+    slugifyLetterboxdTitle('Porky\'s II: The Next Day'),
+    'porkys-ii-the-next-day',
+    'slugifyLetterboxdTitle should preserve words around apostrophes',
+  );
+  assertEqual(
+    slugifyLetterboxdTitle('The Lighthouse'),
+    'the-lighthouse',
+    'slugifyLetterboxdTitle should keep existing plain-title behavior',
   );
 });
 
@@ -255,21 +277,127 @@ test('letterboxd slug resolver: title and canonical slug helpers', () => {
   );
 });
 
-let failed = 0;
-for (const { name, fn } of tests) {
-  try {
-    fn();
-    console.log(`PASS ${name}`);
-  } catch (error) {
-    failed += 1;
-    console.error(`FAIL ${name}`);
-    console.error(error instanceof Error ? error.message : String(error));
+test('recommendation canonicalization: updates changed slugs and tolerates resolver errors', async () => {
+  const result: RecommendationResult = {
+    username: 'tester',
+    generatedAt: Date.now(),
+    seedCount: 2,
+    recommendations: [
+      {
+        tmdbId: 2019,
+        title: 'The Lighthouse',
+        year: 2019,
+        overview: '',
+        posterPath: null,
+        tmdbRating: 7.5,
+        genres: ['Drama'],
+        score: 90,
+        hits: [],
+        onWatchlist: false,
+        letterboxdUrl: 'https://letterboxd.com/film/the-lighthouse/',
+      },
+      {
+        tmdbId: 117,
+        title: 'Stalker',
+        year: 1979,
+        overview: '',
+        posterPath: null,
+        tmdbRating: 8.1,
+        genres: ['Sci-Fi'],
+        score: 88,
+        hits: [],
+        onWatchlist: false,
+        letterboxdUrl: 'https://letterboxd.com/film/stalker/',
+      },
+      {
+        tmdbId: 99999,
+        title: 'Will Throw',
+        year: 2000,
+        overview: '',
+        posterPath: null,
+        tmdbRating: 5.1,
+        genres: [],
+        score: 40,
+        hits: [],
+        onWatchlist: false,
+        letterboxdUrl: 'https://letterboxd.com/film/will-throw/',
+      },
+    ],
+  };
+
+  const { changed } = await canonicalizeRecommendationUrls(
+    result,
+    async (_rec, currentSlug) => {
+      if (currentSlug === 'the-lighthouse') return 'the-lighthouse-2019';
+      if (currentSlug === 'will-throw') throw new Error('resolver failure');
+      return currentSlug;
+    },
+    2,
+  );
+
+  assertEqual(changed, true, 'canonicalizer should report changes when at least one slug is rewritten');
+  assertEqual(
+    result.recommendations[0].letterboxdUrl,
+    'https://letterboxd.com/film/the-lighthouse-2019/',
+    'canonicalizer should rewrite changed slugs',
+  );
+  assertEqual(
+    result.recommendations[1].letterboxdUrl,
+    'https://letterboxd.com/film/stalker/',
+    'canonicalizer should keep unchanged slugs as-is',
+  );
+  assertEqual(
+    result.recommendations[2].letterboxdUrl,
+    'https://letterboxd.com/film/will-throw/',
+    'canonicalizer should keep original slug if resolver throws',
+  );
+});
+
+test('recommendation canonicalization: reports unchanged when no rewrites occur', async () => {
+  const result: RecommendationResult = {
+    username: 'tester',
+    generatedAt: Date.now(),
+    seedCount: 1,
+    recommendations: [
+      {
+        tmdbId: 35,
+        title: 'Cache',
+        year: 2005,
+        overview: '',
+        posterPath: null,
+        tmdbRating: 7.2,
+        genres: [],
+        score: 75,
+        hits: [],
+        onWatchlist: false,
+        letterboxdUrl: 'https://letterboxd.com/film/cache/',
+      },
+    ],
+  };
+
+  const { changed } = await canonicalizeRecommendationUrls(result, async (_rec, currentSlug) => currentSlug);
+  assertEqual(changed, false, 'canonicalizer should report unchanged when all slugs are already canonical');
+});
+
+async function runTests(): Promise<void> {
+  let failed = 0;
+  for (const { name, fn } of tests) {
+    try {
+      await fn();
+      console.log(`PASS ${name}`);
+    } catch (error) {
+      failed += 1;
+      console.error(`FAIL ${name}`);
+      console.error(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  if (failed > 0) {
+    console.error(`\n${failed} test(s) failed`);
+    process.exit(1);
+  } else {
+    console.log(`\n${tests.length} test(s) passed`);
   }
 }
 
-if (failed > 0) {
-  console.error(`\n${failed} test(s) failed`);
-  process.exit(1);
-} else {
-  console.log(`\n${tests.length} test(s) passed`);
-}
+void runTests();
