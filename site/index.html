@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Lekkerboxd is a Chrome extension that turns your Letterboxd activity into personalized movie recommendations."
+    />
+    <title>Lekkerboxd | Personalized Letterboxd Recommendations</title>
+    <style>
+      :root {
+        --bg-1: #0d1117;
+        --bg-2: #131a22;
+        --bg-3: #1a2430;
+        --text: #e8eef4;
+        --muted: #9fb0bf;
+        --line: #293748;
+        --brand: #00e054;
+        --brand-deep: #00b743;
+        --card: rgba(21, 29, 39, 0.78);
+        --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+        background:
+          radial-gradient(1200px 600px at -10% -20%, #204261 0%, transparent 55%),
+          radial-gradient(700px 500px at 100% 0%, #1f5e3f 0%, transparent 58%),
+          linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-3) 100%);
+      }
+
+      .noise {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.09;
+        background-image: radial-gradient(rgba(255, 255, 255, 0.3) 0.4px, transparent 0.4px);
+        background-size: 2px 2px;
+      }
+
+      .wrap {
+        width: min(1080px, 92vw);
+        margin: 0 auto;
+        padding: 32px 0 64px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 36px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .brand-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--brand);
+        box-shadow: 0 0 22px rgba(0, 224, 84, 0.8);
+      }
+
+      .brand-text {
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        font-size: 18px;
+      }
+
+      .top-links {
+        display: flex;
+        gap: 18px;
+      }
+
+      .top-links a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 14px;
+      }
+
+      .top-links a:hover {
+        color: var(--text);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 24px;
+        align-items: stretch;
+      }
+
+      .hero-copy,
+      .hero-card {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--card);
+        backdrop-filter: blur(6px);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-copy {
+        padding: 34px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-copy::after {
+        content: "";
+        position: absolute;
+        inset: auto -140px -140px auto;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle at center, rgba(0, 224, 84, 0.25), transparent 68%);
+      }
+
+      h1 {
+        margin: 0 0 14px;
+        line-height: 1.05;
+        font-size: clamp(34px, 5.2vw, 56px);
+        letter-spacing: -0.03em;
+      }
+
+      .sub {
+        margin: 0;
+        max-width: 56ch;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      .cta-row {
+        margin-top: 26px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        padding: 11px 15px;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid transparent;
+        transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn-primary {
+        background: var(--brand);
+        color: #05160b;
+      }
+
+      .btn-primary:hover {
+        background: var(--brand-deep);
+      }
+
+      .btn-quiet {
+        border-color: var(--line);
+        color: var(--text);
+        background: rgba(10, 14, 18, 0.45);
+      }
+
+      .hero-note {
+        margin-top: 14px;
+        color: #8da0b1;
+        font-size: 13px;
+      }
+
+      .hero-card {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .snapshot {
+        border: 1px solid #324357;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .snapshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .chip {
+        display: inline-flex;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid #33465a;
+        font-size: 12px;
+        color: #b8c8d7;
+        background: rgba(23, 33, 44, 0.7);
+      }
+
+      .grid {
+        margin-top: 24px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(19, 27, 37, 0.86);
+        padding: 16px;
+        animation: rise 0.55s ease both;
+      }
+
+      .panel h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+      }
+
+      .panel p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+        font-size: 14px;
+      }
+
+      .panel:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+
+      .panel:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+
+      .section {
+        margin-top: 22px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 20px;
+        background: rgba(12, 18, 25, 0.8);
+      }
+
+      .section h2 {
+        margin: 0 0 14px;
+        font-size: 21px;
+        letter-spacing: -0.01em;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .step {
+        border: 1px solid #344659;
+        border-radius: 10px;
+        padding: 13px;
+        background: rgba(26, 36, 48, 0.75);
+      }
+
+      .n {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: #082111;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .step p {
+        margin: 0;
+        color: #c2d0de;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .foot {
+        margin-top: 28px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 20px;
+        align-items: center;
+        justify-content: space-between;
+        color: #90a3b4;
+        font-size: 13px;
+      }
+
+      .foot a {
+        color: #c6d3de;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .grid,
+        .steps {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="wrap">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span class="brand-text">Lekkerboxd</span>
+        </div>
+        <nav class="top-links" aria-label="Top links">
+          <a href="https://github.com/dananmay/lekkerboxd">GitHub</a>
+          <a href="https://github.com/dananmay/lekkerboxd/blob/main/PRIVACY.md">Privacy</a>
+        </nav>
+      </header>
+
+      <section class="hero">
+        <article class="hero-copy">
+          <h1>Better Letterboxd picks, in one click.</h1>
+          <p class="sub">
+            Lekkerboxd scans your public Letterboxd activity and generates recommendations using TMDb,
+            Reddit, and Taste.io signals. Fast results, background generation, and clean filtering.
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/lekkerboxd/kilfhpgnabhobfinmljmgojmbndcpeph">Install on Chrome</a>
+            <a class="btn btn-quiet" href="https://github.com/dananmay/lekkerboxd">View Source</a>
+          </div>
+          <p class="hero-note">No account creation required. Works with your existing Letterboxd login.</p>
+        </article>
+        <aside class="hero-card">
+          <div class="snapshot">
+            <img
+              src="./assets/promo-tile-440x280.png"
+              alt="Lekkerboxd recommendation preview"
+              loading="lazy"
+            />
+          </div>
+          <div class="chips">
+            <span class="chip">Store build: no TMDb key required</span>
+            <span class="chip">Pop-up + pop-out modes</span>
+            <span class="chip">One-click watchlist add</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h3>Signal-aware recommendations</h3>
+          <p>Combines TMDb graph data with Reddit and Taste.io signals, then ranks with quality filters.</p>
+        </article>
+        <article class="panel">
+          <h3>Built for browsing flow</h3>
+          <p>Runs in the popup, can pop out to its own window, and keeps generation running in the background.</p>
+        </article>
+        <article class="panel">
+          <h3>User-first controls</h3>
+          <p>Customize seeds, recommendation count, popularity strictness, and JustWatch region routing.</p>
+        </article>
+      </section>
+
+      <section class="section">
+        <h2>Get started in under a minute</h2>
+        <div class="steps">
+          <article class="step">
+            <span class="n">1</span>
+            <p>Install Lekkerboxd from the Chrome Web Store and pin it from the puzzle menu.</p>
+          </article>
+          <article class="step">
+            <span class="n">2</span>
+            <p>Open Letterboxd while logged in and click <strong>Scan Profile</strong>.</p>
+          </article>
+          <article class="step">
+            <span class="n">3</span>
+            <p>Click <strong>Get Recommendations</strong> and start exploring titles instantly.</p>
+          </article>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <span>&copy; <span id="year"></span> Lekkerboxd</span>
+        <span>
+          Contact:
+          <a href="mailto:dhimanta02@gmail.com">dhimanta02@gmail.com</a>
+        </span>
+      </footer>
+    </div>
+    <script>
+      document.getElementById("year").textContent = String(new Date().getFullYear());
+    </script>
+  </body>
+</html>
