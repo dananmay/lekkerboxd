@@ -29,7 +29,7 @@
           linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
         color: var(--text);
         font-family: "Space Grotesk", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-        padding: 24px 0 80px;
+        padding: 20px 0 0;
       }
 
       /* ── Topbar ── */
@@ -49,7 +49,6 @@
         font-weight: 700;
         letter-spacing: 0.04em;
         font-size: 15px;
-        text-transform: uppercase;
       }
 
       .dot {
@@ -81,11 +80,10 @@
       /* ── Stage ── */
       .stage {
         width: min(1100px, 92vw);
-        margin: 0 auto;
-        min-height: calc(100vh - 100px);
+        margin: 28px auto 0;
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 64px;
+        gap: 56px;
         align-items: center;
       }
 
@@ -93,7 +91,7 @@
       .copy {
         display: flex;
         flex-direction: column;
-        gap: 28px;
+        gap: 24px;
       }
 
       .badge {
@@ -119,7 +117,7 @@
       }
 
       .headline {
-        font-size: clamp(32px, 4vw, 52px);
+        font-size: clamp(30px, 3.8vw, 50px);
         font-weight: 800;
         line-height: 1.1;
         letter-spacing: -0.02em;
@@ -132,7 +130,7 @@
       }
 
       .subtext {
-        font-size: 17px;
+        font-size: 16px;
         line-height: 1.65;
         color: #8faec6;
         max-width: 420px;
@@ -218,7 +216,7 @@
       }
 
       .popup-chrome {
-        width: 340px;
+        width: 400px;
         background: var(--popup-bg);
         border-radius: 12px;
         border: 1px solid #3a4655;
@@ -253,14 +251,8 @@
         box-shadow: 0 0 8px rgba(0, 224, 84, 0.7);
       }
 
-      .p-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: #fff;
-        letter-spacing: 0.4px;
-      }
-
-      .p-gear { color: #567; opacity: 0.8; }
+      .p-title { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 0.4px; }
+      .p-gear  { color: #567; opacity: 0.8; }
 
       /* Profile card */
       .p-body {
@@ -310,16 +302,9 @@
         gap: 1px;
       }
 
-      .p-stat-num { font-size: 14px; font-weight: 700; color: #def; }
-
-      .p-stat-label {
-        font-size: 9px;
-        color: #567;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .p-stat-div { width: 1px; height: 22px; background: var(--popup-border); }
+      .p-stat-num   { font-size: 14px; font-weight: 700; color: #def; }
+      .p-stat-label { font-size: 9px; color: #567; text-transform: uppercase; letter-spacing: 0.5px; }
+      .p-stat-div   { width: 1px; height: 22px; background: var(--popup-border); }
 
       /* Get recs button */
       .p-btn {
@@ -342,21 +327,8 @@
         padding: 2px 0 4px;
       }
 
-      .p-rec-count {
-        font-size: 10px;
-        color: #567;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-      }
-
-      .p-rec-age {
-        font-size: 10px;
-        color: #789;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        font-weight: 600;
-      }
+      .p-rec-count { font-size: 10px; color: #567; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+      .p-rec-age   { font-size: 10px; color: #789; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
 
       /* Rec cards */
       .p-rec-list { display: flex; flex-direction: column; gap: 6px; }
@@ -374,15 +346,30 @@
       .p-rec-card.high { border-color: rgba(0, 224, 84, 0.38); }
       .p-rec-card.mid  { border-color: rgba(255, 140, 0, 0.45); }
 
+      /* Poster */
       .p-poster {
-        width: 46px;
-        height: 70px;
+        width: 54px;
+        height: 81px;
         border-radius: 4px;
         flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .p-poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .p-poster::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 55%);
+        border-radius: 4px;
+        pointer-events: none;
       }
 
       .p-rec-info {
@@ -395,13 +382,13 @@
         padding-bottom: 6px;
       }
 
-      .p-rec-title { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .p-rec-year  { color: #9ab; font-weight: 500; }
-      .p-rec-meta  { font-size: 10.5px; color: #678; }
+      .p-rec-title  { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .p-rec-year   { color: #9ab; font-weight: 500; }
+      .p-rec-meta   { font-size: 10.5px; color: #678; }
 
       .p-rec-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 1px; }
 
-      .p-badge { font-size: 9px; padding: 2px 5px; border-radius: 8px; font-weight: 500; }
+      .p-badge        { font-size: 9px; padding: 2px 5px; border-radius: 8px; font-weight: 500; }
       .p-badge.source { background: #2c3440; color: #789; }
       .p-badge.wl     { background: rgba(64, 188, 244, 0.15); color: #40bcf4; }
 
@@ -410,15 +397,14 @@
       .p-score {
         position: absolute;
         top: 8px; right: 8px;
-        font-size: 9.5px;
-        font-weight: 700;
+        font-size: 9.5px; font-weight: 700;
         padding: 2px 6px;
         border-radius: 10px;
         border: 1px solid;
       }
 
-      .p-score.high { background: rgba(0,224,84,0.22);   color: #00ff66; border-color: rgba(0,224,84,0.5); }
-      .p-score.mid  { background: rgba(255,140,0,0.22);  color: #ff9c00; border-color: rgba(255,140,0,0.52); }
+      .p-score.high { background: rgba(0,224,84,0.22);  color: #00ff66; border-color: rgba(0,224,84,0.5); }
+      .p-score.mid  { background: rgba(255,140,0,0.22); color: #ff9c00; border-color: rgba(255,140,0,0.52); }
 
       .p-wl-btn {
         position: absolute;
@@ -436,39 +422,37 @@
       /* ── Feature strip ── */
       .features {
         width: min(1100px, 92vw);
-        margin: 80px auto 0;
+        margin: 36px auto 40px;
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
+        gap: 16px;
       }
 
       .feature-card {
         background: rgba(22, 32, 44, 0.5);
         border: 1px solid #2a3748;
         border-radius: 12px;
-        padding: 24px 22px;
+        padding: 20px 20px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
       }
 
-      .feature-icon { font-size: 22px; line-height: 1; }
-      .feature-title { font-size: 14px; font-weight: 700; color: #d4e4f0; }
-      .feature-body  { font-size: 13px; color: #6e8fa8; line-height: 1.6; }
+      .feature-icon  { font-size: 20px; line-height: 1; }
+      .feature-title { font-size: 13.5px; font-weight: 700; color: #d4e4f0; }
+      .feature-body  { font-size: 12.5px; color: #6e8fa8; line-height: 1.55; }
 
       /* ── Responsive ── */
       @media (max-width: 860px) {
         .stage {
           grid-template-columns: 1fr;
-          gap: 48px;
-          padding: 40px 0;
-          min-height: unset;
+          gap: 40px;
+          margin-top: 32px;
         }
 
         .popup-wrap { order: -1; }
-        .popup-chrome { width: min(340px, 100%); }
+        .popup-chrome { width: min(400px, 100%); }
         .features { grid-template-columns: 1fr; }
-
         .subtext { max-width: none; }
       }
 
@@ -476,6 +460,7 @@
         .cta-row { flex-direction: column; }
         .btn { width: 100%; justify-content: center; }
         .nav-links { gap: 14px; }
+        .popup-chrome { width: 100%; }
       }
     </style>
   </head>
@@ -487,7 +472,7 @@
       </div>
       <nav class="nav-links" aria-label="Primary">
         <a class="nav-link" href="https://github.com/dananmay/lekkerboxd/blob/main/PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy policy</a>
-        <a class="nav-link" href="mailto:support@lekkerboxd.com">Contact</a>
+        <a class="nav-link" href="mailto:support@lekkerboxd.com">Contact Us</a>
       </nav>
     </header>
 
@@ -501,12 +486,12 @@
 
         <h1 class="headline">
           Your Letterboxd taste,<br>
-          turned into a<br>
-          <em>watchlist.</em>
+          turned into<br>
+          <em>recommendations.</em>
         </h1>
 
         <p class="subtext">
-          Scan your profile. Get <strong>20 films you'll actually want to watch</strong> —
+          Scan your profile. Get <strong>films you'll actually want to watch</strong> —
           not just whatever's trending. Built on your ratings, likes, and history.
         </p>
 
@@ -516,7 +501,7 @@
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
               <path d="M12 8v8M8 12l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Add to Chrome — it's free
+            Add to Chrome
           </a>
           <a class="btn" href="https://github.com/dananmay/lekkerboxd" target="_blank" rel="noopener noreferrer">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -530,8 +515,6 @@
           Open source
           <span class="social-proof-dot"></span>
           No account needed
-          <span class="social-proof-dot"></span>
-          TMDb + Reddit + Taste.io
         </p>
       </div>
 
@@ -586,8 +569,13 @@
             </div>
 
             <div class="p-rec-list">
+
+              <!-- The Conformist (1970) -->
               <div class="p-rec-card high">
-                <div class="p-poster" style="background: linear-gradient(135deg, #1a2535, #2d1f35);">🎬</div>
+                <div class="p-poster" style="background: linear-gradient(160deg, #5c3317 0%, #8b4a1a 45%, #2d1608 100%);">
+                  <img src="https://image.tmdb.org/t/p/w185/bOjdFzT2MHU1fMBMFj2nnH8bxhV.jpg" alt="The Conformist"
+                    onerror="this.style.display='none'">
+                </div>
                 <div class="p-rec-info">
                   <div class="p-rec-title">The Conformist <span class="p-rec-year">&bull; 1970</span></div>
                   <div class="p-rec-meta">Drama, Crime &middot; TMDb 8.0</div>
@@ -604,8 +592,12 @@
                 </div>
               </div>
 
+              <!-- Stalker (1979) -->
               <div class="p-rec-card high">
-                <div class="p-poster" style="background: linear-gradient(135deg, #141c2e, #1e2d1a);">🎬</div>
+                <div class="p-poster" style="background: linear-gradient(160deg, #0e1f2e 0%, #1a3a50 45%, #090f16 100%);">
+                  <img src="https://image.tmdb.org/t/p/w185/d1qpxGKDsMEELp3t8Mh1N5yBRq3.jpg" alt="Stalker"
+                    onerror="this.style.display='none'">
+                </div>
                 <div class="p-rec-info">
                   <div class="p-rec-title">Stalker <span class="p-rec-year">&bull; 1979</span></div>
                   <div class="p-rec-meta">Science Fiction, Drama &middot; TMDb 8.1</div>
@@ -621,8 +613,12 @@
                 </div>
               </div>
 
+              <!-- Caché (2005) -->
               <div class="p-rec-card mid">
-                <div class="p-poster" style="background: linear-gradient(135deg, #251a14, #1a2030);">🎬</div>
+                <div class="p-poster" style="background: linear-gradient(160deg, #1c1e26 0%, #2e3140 45%, #0e0f14 100%);">
+                  <img src="https://image.tmdb.org/t/p/w185/xRwHKMhFfxmxBH2tD5TiGS7dNhL.jpg" alt="Caché"
+                    onerror="this.style.display='none'">
+                </div>
                 <div class="p-rec-info">
                   <div class="p-rec-title">Caché <span class="p-rec-year">&bull; 2005</span></div>
                   <div class="p-rec-meta">Drama, Thriller &middot; TMDb 7.2</div>
@@ -638,6 +634,7 @@
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#00E054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
