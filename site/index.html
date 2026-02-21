@@ -575,22 +575,22 @@
               </div>
               <div class="p-stats">
                 <div class="p-stat">
-                  <span class="p-stat-num">312</span>
+                  <span class="p-stat-num" data-target="312">0</span>
                   <span class="p-stat-label">watched</span>
                 </div>
                 <div class="p-stat-div"></div>
                 <div class="p-stat">
-                  <span class="p-stat-num">89</span>
+                  <span class="p-stat-num" data-target="89">0</span>
                   <span class="p-stat-label">rated</span>
                 </div>
                 <div class="p-stat-div"></div>
                 <div class="p-stat">
-                  <span class="p-stat-num">47</span>
+                  <span class="p-stat-num" data-target="47">0</span>
                   <span class="p-stat-label">liked</span>
                 </div>
                 <div class="p-stat-div"></div>
                 <div class="p-stat">
-                  <span class="p-stat-num">23</span>
+                  <span class="p-stat-num" data-target="23">0</span>
                   <span class="p-stat-label">watchlist</span>
                 </div>
               </div>
@@ -703,6 +703,23 @@
       ];
       document.getElementById('mock-username').textContent =
         names[Math.floor(Math.random() * names.length)];
+
+      // Animate stat numbers with ease-out cubic
+      (function () {
+        var duration = 1500;
+        var els = document.querySelectorAll('.p-stat-num[data-target]');
+        var start = null;
+        function step(ts) {
+          if (!start) start = ts;
+          var t = Math.min((ts - start) / duration, 1);
+          var ease = 1 - Math.pow(1 - t, 3);
+          els.forEach(function (el) {
+            el.textContent = Math.round(ease * +el.dataset.target);
+          });
+          if (t < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      })();
     </script>
   </body>
 </html>
