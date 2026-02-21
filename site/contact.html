@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Us — Lekkerboxd</title>
+    <meta name="description" content="Get in touch with the Lekkerboxd team." />
+    <link rel="icon" type="image/png" href="./assets/lekkerboxd-favicon.png" />
+    <style>
+      :root {
+        --bg: #0b0f13;
+        --bg-2: #111823;
+        --line: #2f3b4d;
+        --text: #ecf2f8;
+        --muted: #90a4b8;
+        --brand: #00e054;
+        --brand-deep: #00b744;
+        --input-bg: #131922;
+        --input-border: #2a3545;
+        --input-focus: #3a4f66;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { background: var(--bg); }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
+        color: var(--text);
+        font-family: "Space Grotesk", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+        padding: 20px 0 0;
+      }
+
+      /* ── Topbar ── */
+      .topbar {
+        width: min(1100px, 92vw);
+        margin: 0 auto;
+        padding: 6px 2px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        font-size: 16px;
+        text-decoration: none;
+        color: var(--text);
+      }
+
+      .dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--brand);
+        box-shadow: 0 0 18px rgba(0, 224, 84, 0.85);
+        flex-shrink: 0;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+      }
+
+      .nav-divider {
+        width: 1px;
+        height: 14px;
+        background: #3a4b5b;
+        opacity: 0.9;
+      }
+
+      .nav-link {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        border-bottom: 1px solid transparent;
+        transition: color 0.15s, border-color 0.15s;
+      }
+
+      .nav-link:hover { color: var(--text); border-color: #4a5f56; }
+      .nav-link.active { color: var(--text); border-color: var(--brand); }
+
+      /* ── Document ── */
+      .doc {
+        width: min(560px, 92vw);
+        margin: clamp(32px, 6vh, 64px) auto 0;
+        padding-bottom: 64px;
+        flex: 1;
+      }
+
+      .doc-header {
+        margin-bottom: 36px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .doc-header h1 {
+        font-size: clamp(24px, 3vw, 32px);
+        font-weight: 800;
+        color: #f0f6fc;
+        line-height: 1.2;
+        margin-bottom: 8px;
+      }
+
+      .subtitle {
+        font-size: 14.5px;
+        color: #5f7a8e;
+        line-height: 1.6;
+      }
+
+      /* ── Form ── */
+      .form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #9ab;
+        letter-spacing: 0.03em;
+      }
+
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        padding: 11px 14px;
+        background: var(--input-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 14.5px;
+        line-height: 1.5;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: var(--input-focus);
+        box-shadow: 0 0 0 3px rgba(0, 224, 84, 0.08);
+      }
+
+      .field input::placeholder,
+      .field textarea::placeholder {
+        color: #3e5060;
+      }
+
+      .field select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23567' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        padding-right: 38px;
+        cursor: pointer;
+      }
+
+      .field select option {
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .field textarea {
+        min-height: 140px;
+        resize: vertical;
+      }
+
+      .submit-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 13px 28px;
+        border-radius: 999px;
+        border: none;
+        background: var(--brand);
+        color: #061a0c;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+        width: fit-content;
+      }
+
+      .submit-btn:hover {
+        background: var(--brand-deep);
+        box-shadow: 0 4px 20px rgba(0, 224, 84, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .submit-btn:active {
+        transform: translateY(0);
+      }
+
+      .submit-btn svg {
+        flex-shrink: 0;
+      }
+
+      /* ── Alt contact ── */
+      .alt-contact {
+        margin-top: 36px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+      }
+
+      .alt-contact p {
+        font-size: 13.5px;
+        color: #5f7a8e;
+        line-height: 1.6;
+      }
+
+      .alt-contact a {
+        color: var(--brand);
+        text-decoration: none;
+        font-weight: 500;
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.15s;
+      }
+
+      .alt-contact a:hover {
+        border-color: var(--brand);
+      }
+
+      /* ── Footer ── */
+      .site-footer {
+        margin-top: auto;
+        padding: 20px 0;
+        text-align: center;
+        border-top: 1px solid var(--line);
+      }
+
+      .site-footer p {
+        font-size: 12px;
+        color: #456;
+      }
+
+      /* ── Responsive ── */
+      @media (max-width: 480px) {
+        .nav-links { gap: 14px; }
+        .submit-btn { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Lekkerboxd</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="nav-link" href="./privacy.html">Privacy Policy</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a class="nav-link active" href="./contact.html">Contact Us</a>
+      </nav>
+    </header>
+
+    <main class="doc">
+      <div class="doc-header">
+        <h1>Contact Us</h1>
+        <p class="subtitle">Bug report, feature request, or just want to say hi? Send us a message.</p>
+      </div>
+
+      <form class="form" id="contact-form" action="https://formspree.io/f/mlgwpwep" method="POST">
+        <div class="field">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" placeholder="Your name" required />
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="_replyto" placeholder="you@example.com" required />
+        </div>
+
+        <div class="field">
+          <label for="topic">Topic</label>
+          <select id="topic" name="topic" required>
+            <option value="" disabled selected>Select a topic</option>
+            <option value="Bug Report">Bug Report</option>
+            <option value="Feature Request">Feature Request</option>
+            <option value="General Question">General Question</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" placeholder="Tell us what's on your mind..." required></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Send Message
+        </button>
+      </form>
+
+      <div class="alt-contact">
+        <p>
+          You can also email us directly at
+          <a href="mailto:support@lekkerboxd.com">support@lekkerboxd.com</a>
+          or open an issue on
+          <a href="https://github.com/dananmay/lekkerboxd/issues" target="_blank" rel="noopener noreferrer">GitHub</a>.
+        </p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <p>Lekkerboxd &middot; Built for film lovers who want to dig deeper</p>
+    </footer>
+
+    <script>
+      var form = document.getElementById('contact-form');
+      var btn = form.querySelector('.submit-btn');
+      var btnText = btn.innerHTML;
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        btn.disabled = true;
+        btn.innerHTML = 'Sending\u2026';
+
+        fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { 'Accept': 'application/json' }
+        }).then(function (res) {
+          if (res.ok) {
+            form.reset();
+            btn.innerHTML = '\u2714 Message sent!';
+            btn.style.background = '#1a6b3a';
+            btn.style.color = '#6ee09a';
+            setTimeout(function () {
+              btn.innerHTML = btnText;
+              btn.style.background = '';
+              btn.style.color = '';
+              btn.disabled = false;
+            }, 3000);
+          } else {
+            throw new Error('Form submission failed');
+          }
+        }).catch(function () {
+          btn.innerHTML = 'Something went wrong';
+          btn.style.background = '#6b1a1a';
+          btn.style.color = '#f08080';
+          setTimeout(function () {
+            btn.innerHTML = btnText;
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.disabled = false;
+          }, 3000);
+        });
+      });
+    </script>
+  </body>
+</html>
