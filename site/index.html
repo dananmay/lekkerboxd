@@ -8,7 +8,6 @@
       :root {
         --bg: #0b0f13;
         --bg-2: #111823;
-        --panel: rgba(20, 28, 38, 0.72);
         --line: #2f3b4d;
         --text: #ecf2f8;
         --muted: #90a4b8;
@@ -34,16 +33,11 @@
 
       .topbar {
         width: min(1080px, 92vw);
-        margin: 0 auto;
-        padding: 14px 18px;
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        background: var(--panel);
-        backdrop-filter: blur(8px);
+        margin: 0 auto 20px;
+        padding: 4px 2px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.32);
       }
 
       .brand {
@@ -66,7 +60,7 @@
 
       .actions {
         display: flex;
-        gap: 10px;
+        gap: 18px;
       }
 
       .btn {
@@ -102,23 +96,19 @@
       }
 
       .menu-link {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 12px;
-        border-radius: 999px;
-        border: 1px solid var(--line);
-        background: rgba(16, 23, 32, 0.55);
+        display: inline-block;
+        padding: 2px 0;
         color: var(--text);
         text-decoration: none;
         font-size: 13px;
         font-weight: 500;
-        transition: border-color 0.18s ease, background-color 0.18s ease;
+        border-bottom: 1px solid transparent;
+        transition: color 0.18s ease, border-color 0.18s ease;
       }
 
       .menu-link:hover {
-        border-color: #44566f;
-        background: rgba(21, 32, 45, 0.78);
+        color: #cfe7dc;
+        border-color: #4a5f56;
       }
 
       .stage {
