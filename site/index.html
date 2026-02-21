@@ -878,8 +878,8 @@
           var distance = Math.min(1, Math.hypot(nx, ny));
           var centerBoost = 1 - distance;
 
-          var tiltY = nx * maxTiltY;
-          var tiltX = -ny * maxTiltX;
+          var tiltY = -nx * maxTiltY;
+          var tiltX = ny * maxTiltX;
           var lift = 6 + centerBoost * 3;
           var shadowX = nx * 18;
           var shadowY = 36 + Math.abs(ny) * 10;
