@@ -466,6 +466,81 @@
         padding-bottom: 12px;
       }
 
+      /* ── Entrance animations ── */
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(18px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(30px) scale(0.97); }
+        to   { opacity: 1; transform: translateX(0) scale(1); }
+      }
+
+      @keyframes shimmer {
+        0%   { background-position: -200% center; }
+        100% { background-position: 200% center; }
+      }
+
+      @keyframes featureFadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Left column staggered entrance */
+      .badge, .headline, .subtext, .cta-row, .social-proof {
+        opacity: 0;
+        animation: fadeUp 0.7s ease-out both;
+      }
+      .badge        { animation-delay: 0s; }
+      .headline     { animation-delay: 0.1s; }
+      .subtext      { animation-delay: 0.2s; }
+      .cta-row      { animation-delay: 0.3s; }
+      .social-proof { animation-delay: 0.4s; }
+
+      /* Popup slide-in */
+      .popup-wrap {
+        opacity: 0;
+        animation: slideInRight 0.8s ease-out 0.2s both;
+      }
+
+      /* Rec cards cascade */
+      .p-rec-card {
+        opacity: 0;
+        animation: fadeUp 0.5s ease-out both;
+      }
+      .p-rec-card:nth-child(1) { animation-delay: 0.5s; }
+      .p-rec-card:nth-child(2) { animation-delay: 0.65s; }
+      .p-rec-card:nth-child(3) { animation-delay: 0.8s; }
+
+      /* Green "recommendations." shimmer */
+      .headline em {
+        background: linear-gradient(
+          90deg,
+          var(--brand) 0%,
+          var(--brand) 35%,
+          #7dffa8 50%,
+          var(--brand) 65%,
+          var(--brand) 100%
+        );
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: shimmer 2s ease-in-out 0.8s 1 both;
+      }
+
+      /* Feature strip fade-up */
+      .feature-item, .feature-sep {
+        opacity: 0;
+        animation: featureFadeUp 0.5s ease-out both;
+      }
+      .features > :nth-child(1) { animation-delay: 0.6s; }
+      .features > :nth-child(2) { animation-delay: 0.7s; }
+      .features > :nth-child(3) { animation-delay: 0.8s; }
+      .features > :nth-child(4) { animation-delay: 0.9s; }
+      .features > :nth-child(5) { animation-delay: 1.0s; }
+
       /* ── Responsive ── */
       @media (max-width: 860px) {
         .stage {
