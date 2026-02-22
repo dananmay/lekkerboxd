@@ -10,8 +10,9 @@ import {
 } from '../lib/api/tmdb-client';
 import { parseFilmsFromHTML, parsePaginationFromHTML } from '../content/scraper/pagination';
 import { getProfilePageUrl, letterboxdFilmUrl } from '../lib/utils/url-utils';
-import { resolveCanonicalFilmSlug } from '../lib/utils/letterboxd-slug-resolver';
+import { doesFilmSlugMatchContext, resolveCanonicalFilmSlug } from '../lib/utils/letterboxd-slug-resolver';
 import { canonicalizeRecommendationUrls } from '../lib/utils/recommendation-url-canonicalizer';
+import { applyCanonicalSlugCachePatch, resolveCanonicalSlugWithCachePolicy } from '../lib/utils/canonical-slug-cache-policy';
 import { withStorageLock } from '../lib/storage/storage-mutex';
 import { ensureCacheSchemaMetadata } from '../lib/storage/cache-schema';
 import { debugWarn } from '../lib/utils/debug-log';
@@ -714,20 +715,39 @@ async function resolveCanonicalFilmSlugCached(
   filmTitle?: string,
   filmYear?: number,
 ): Promise<string> {
+  const normalizedYear = typeof filmYear === 'number' && filmYear > 0 ? filmYear : undefined;
+  const contextual = Boolean((filmTitle && filmTitle.trim().length > 0) || normalizedYear);
   const cache = await getCanonicalSlugCache();
-  const tmdbKey = String(tmdbId);
-  if (cache.byTmdbId[tmdbKey]) return cache.byTmdbId[tmdbKey];
-  if (cache.bySlug[filmSlug]) return cache.bySlug[filmSlug];
+  const contextValidationCache = new Map<string, Promise<boolean>>();
+  const verifyContext = async (slug: string): Promise<boolean> => {
+    if (!contextual) return true;
+    const cached = contextValidationCache.get(slug);
+    if (cached) return cached;
+    const pending = doesFilmSlugMatchContext(slug, filmTitle, normalizedYear).catch(() => false);
+    contextValidationCache.set(slug, pending);
+    return pending;
+  };
 
-  const canonicalSlug = await resolveCanonicalFilmSlug(filmSlug, filmTitle, filmYear);
-  await withStorageLock(CANONICAL_SLUG_CACHE_KEY, async () => {
-    const fresh = await getCanonicalSlugCache();
-    fresh.bySlug[filmSlug] = canonicalSlug;
-    fresh.bySlug[canonicalSlug] = canonicalSlug;
-    fresh.byTmdbId[tmdbKey] = canonicalSlug;
-    await chrome.storage.local.set({ [CANONICAL_SLUG_CACHE_KEY]: fresh });
+  const result = await resolveCanonicalSlugWithCachePolicy({
+    cache,
+    tmdbId,
+    requestedSlug: filmSlug,
+    contextual,
+    verifyContext,
+    resolveFresh: () => resolveCanonicalFilmSlug(filmSlug, filmTitle, normalizedYear),
+    confirmResolvedForCache: verifyContext,
   });
-  return canonicalSlug;
+
+  const { patch } = result;
+  if (patch) {
+    await withStorageLock(CANONICAL_SLUG_CACHE_KEY, async () => {
+      const fresh = await getCanonicalSlugCache();
+      const merged = applyCanonicalSlugCachePatch(fresh, patch);
+      await chrome.storage.local.set({ [CANONICAL_SLUG_CACHE_KEY]: merged });
+    });
+  }
+
+  return result.resolvedSlug;
 }
 
 async function handleOpenLetterboxdFilm(

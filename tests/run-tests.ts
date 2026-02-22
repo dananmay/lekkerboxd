@@ -19,8 +19,10 @@ import {
   normalizeTitle as normalizeResolverTitle,
   parseTitleAndYear as parseResolverTitleAndYear,
   extractCanonicalSlugFromFilmUrl,
+  resolveCanonicalFilmSlug,
 } from '../src/lib/utils/letterboxd-slug-resolver';
 import { canonicalizeRecommendationUrls } from '../src/lib/utils/recommendation-url-canonicalizer';
+import { applyCanonicalSlugCachePatch, resolveCanonicalSlugWithCachePolicy } from '../src/lib/utils/canonical-slug-cache-policy';
 import type { RecommendationResult } from '../src/types/recommendation';
 
 declare const process: any;
@@ -48,6 +50,19 @@ function assertDeepEqual(actual: unknown, expected: unknown, message: string): v
   const e = JSON.stringify(expected, null, 2);
   if (a !== e) {
     throw new Error(`${message}\nExpected: ${e}\nActual: ${a}`);
+  }
+}
+
+async function withMockFetch(
+  mockFetch: (input: unknown) => Promise<{ ok: boolean; url: string; text: () => Promise<string> }>,
+  run: () => Promise<void>,
+): Promise<void> {
+  const previousFetch = (globalThis as { fetch?: unknown }).fetch;
+  (globalThis as { fetch: unknown }).fetch = mockFetch as unknown as typeof fetch;
+  try {
+    await run();
+  } finally {
+    (globalThis as { fetch?: unknown }).fetch = previousFetch;
   }
 }
 
@@ -275,6 +290,155 @@ test('letterboxd slug resolver: title and canonical slug helpers', () => {
     'la-confidential',
     'extractCanonicalSlugFromFilmUrl should parse canonical slug',
   );
+});
+
+test('letterboxd slug resolver: uses year-suffixed probe when base slug lands on wrong year', async () => {
+  await withMockFetch(async (input) => {
+    const url = String(input);
+    if (url.includes('/film/the-lighthouse-2019/')) {
+      return {
+        ok: true,
+        url: 'https://letterboxd.com/film/the-lighthouse-2019/',
+        text: async () => '<meta property="og:title" content="The Lighthouse (2019)" />',
+      };
+    }
+    if (url.includes('/film/the-lighthouse/')) {
+      return {
+        ok: true,
+        url: 'https://letterboxd.com/film/the-lighthouse/',
+        text: async () => '<meta property="og:title" content="The Lighthouse (1998)" />',
+      };
+    }
+    throw new Error(`unexpected url: ${url}`);
+  }, async () => {
+    const slug = await resolveCanonicalFilmSlug('the-lighthouse', 'The Lighthouse', 2019);
+    assertEqual(
+      slug,
+      'the-lighthouse-2019',
+      'resolver should use year-disambiguated slug when base slug metadata mismatches year context',
+    );
+  });
+});
+
+test('letterboxd slug resolver: search fallback resolves correct year when year-suffixed slug probe is unavailable', async () => {
+  await withMockFetch(async (input) => {
+    const url = String(input);
+    if (url.includes('/film/the-lighthouse-2019/')) {
+      return {
+        ok: false,
+        url: 'https://letterboxd.com/film/the-lighthouse-2019/',
+        text: async () => '',
+      };
+    }
+    if (url.includes('/film/the-lighthouse/')) {
+      return {
+        ok: true,
+        url: 'https://letterboxd.com/film/the-lighthouse/',
+        text: async () => '<meta property="og:title" content="The Lighthouse (1998)" />',
+      };
+    }
+    if (url.includes('/search/films/')) {
+      return {
+        ok: true,
+        url: 'https://letterboxd.com/search/films/The%20Lighthouse/',
+        text: async () => [
+          '<div data-item-slug="the-lighthouse" data-item-name="The Lighthouse (1998)"></div>',
+          '<div data-item-slug="the-lighthouse-2019" data-item-name="The Lighthouse (2019)"></div>',
+        ].join(''),
+      };
+    }
+    throw new Error(`unexpected url: ${url}`);
+  }, async () => {
+    const slug = await resolveCanonicalFilmSlug('the-lighthouse', 'The Lighthouse', 2019);
+    assertEqual(
+      slug,
+      'the-lighthouse-2019',
+      'resolver should choose the correct year match from search fallback when direct probes fail',
+    );
+  });
+});
+
+test('letterboxd slug resolver: keeps original slug when lookups fail', async () => {
+  await withMockFetch(async () => {
+    throw new Error('network down');
+  }, async () => {
+    const slug = await resolveCanonicalFilmSlug('the-lighthouse', 'The Lighthouse', 2019);
+    assertEqual(
+      slug,
+      'the-lighthouse',
+      'resolver should return the original slug when both direct and search lookups fail',
+    );
+  });
+});
+
+test('canonical slug cache policy: stale bySlug entry is rejected and replaced in contextual mode', async () => {
+  const initialCache = {
+    byTmdbId: { '2019': 'the-lighthouse' },
+    bySlug: { 'the-lighthouse': 'the-lighthouse' },
+  };
+
+  const result = await resolveCanonicalSlugWithCachePolicy({
+    cache: initialCache,
+    tmdbId: 2019,
+    requestedSlug: 'the-lighthouse',
+    contextual: true,
+    verifyContext: async (slug) => slug === 'the-lighthouse-2019',
+    resolveFresh: async () => 'the-lighthouse-2019',
+    confirmResolvedForCache: async (slug) => slug === 'the-lighthouse-2019',
+  });
+
+  assertEqual(
+    result.resolvedSlug,
+    'the-lighthouse-2019',
+    'policy should use fresh resolution when cached slug fails contextual verification',
+  );
+  if (!result.patch) throw new Error('expected cache patch for stale contextual slug replacement');
+
+  const updated = applyCanonicalSlugCachePatch(initialCache, result.patch);
+  assertEqual(updated.bySlug['the-lighthouse'], 'the-lighthouse-2019', 'stale requested slug mapping should be overwritten');
+  assertEqual(updated.byTmdbId['2019'], 'the-lighthouse-2019', 'tmdb cache entry should self-heal to canonical slug');
+});
+
+test('canonical slug cache policy: valid bySlug entry is accepted and backfills byTmdbId', async () => {
+  const initialCache = {
+    byTmdbId: {},
+    bySlug: { 'the-lighthouse': 'the-lighthouse-2019' },
+  };
+
+  const result = await resolveCanonicalSlugWithCachePolicy({
+    cache: initialCache,
+    tmdbId: 2019,
+    requestedSlug: 'the-lighthouse',
+    contextual: true,
+    verifyContext: async (slug) => slug === 'the-lighthouse-2019',
+    resolveFresh: async () => {
+      throw new Error('resolveFresh should not run when bySlug cache is valid');
+    },
+  });
+
+  assertEqual(result.resolvedSlug, 'the-lighthouse-2019', 'policy should trust context-validated bySlug cache entry');
+  if (!result.patch?.tmdbEntry) throw new Error('expected tmdb backfill patch when bySlug cache is valid');
+  assertEqual(result.patch.tmdbEntry[1], 'the-lighthouse-2019', 'tmdb backfill should point to canonical slug');
+});
+
+test('canonical slug cache policy: fallback-to-input slug is not cached in contextual mode when unconfirmed', async () => {
+  const initialCache = {
+    byTmdbId: {},
+    bySlug: {},
+  };
+
+  const result = await resolveCanonicalSlugWithCachePolicy({
+    cache: initialCache,
+    tmdbId: 2019,
+    requestedSlug: 'the-lighthouse',
+    contextual: true,
+    verifyContext: async () => false,
+    resolveFresh: async () => 'the-lighthouse',
+    confirmResolvedForCache: async () => false,
+  });
+
+  assertEqual(result.resolvedSlug, 'the-lighthouse', 'policy should return fallback slug when fresh resolution cannot disambiguate');
+  assertEqual(result.patch, null, 'policy should avoid caching unconfirmed contextual fallback slugs');
 });
 
 test('recommendation canonicalization: updates changed slugs and tolerates resolver errors', async () => {

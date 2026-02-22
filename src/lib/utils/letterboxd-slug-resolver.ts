@@ -32,6 +32,61 @@ export function extractCanonicalSlugFromFilmUrl(url: string): string | null {
   return match ? match[1] : null;
 }
 
+interface FilmPageMeta {
+  canonicalSlug: string | null;
+  title: string;
+  year: number | null;
+}
+
+function hasContext(filmTitle?: string, filmYear?: number): boolean {
+  const hasTitle = typeof filmTitle === 'string' && filmTitle.trim().length > 0;
+  const hasYear = typeof filmYear === 'number' && filmYear > 0;
+  return hasTitle || hasYear;
+}
+
+function pageMatchesContext(
+  pageMeta: Pick<FilmPageMeta, 'title' | 'year'>,
+  filmTitle?: string,
+  filmYear?: number,
+): boolean {
+  const sameTitle = !filmTitle || normalizeTitle(pageMeta.title) === normalizeTitle(filmTitle);
+  const sameYear = !filmYear || pageMeta.year === filmYear;
+  return sameTitle && sameYear;
+}
+
+async function fetchFilmPageMetaBySlug(filmSlug: string): Promise<FilmPageMeta | null> {
+  try {
+    const response = await fetch(`https://letterboxd.com/film/${filmSlug}/`, {
+      redirect: 'follow',
+    });
+    if (!response.ok) return null;
+
+    const canonicalSlug = extractCanonicalSlugFromFilmUrl(response.url) ?? filmSlug;
+    const html = await response.text();
+    const titleMatch = html.match(/property="og:title"\s+content="([^"]+)"/i);
+    const pageMeta = parseTitleAndYear(titleMatch?.[1] ?? '');
+
+    return {
+      canonicalSlug,
+      title: pageMeta.title,
+      year: pageMeta.year,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function doesFilmSlugMatchContext(
+  filmSlug: string,
+  filmTitle?: string,
+  filmYear?: number,
+): Promise<boolean> {
+  if (!hasContext(filmTitle, filmYear)) return true;
+  const pageMeta = await fetchFilmPageMetaBySlug(filmSlug);
+  if (!pageMeta) return false;
+  return pageMatchesContext(pageMeta, filmTitle, filmYear);
+}
+
 function extractSearchCandidates(html: string): Array<{ slug: string; title: string; year: number | null }> {
   const candidates: Array<{ slug: string; title: string; year: number | null }> = [];
   const tagPattern = /<[^>]*data-item-slug="([^"]+)"[^>]*>/gi;
@@ -53,31 +108,25 @@ export async function resolveCanonicalFilmSlug(
   filmTitle?: string,
   filmYear?: number,
 ): Promise<string> {
-  // First, try direct film page. If Letterboxd redirects, use the canonical slug.
-  try {
-    const direct = await fetch(`https://letterboxd.com/film/${filmSlug}/`, {
-      redirect: 'follow',
-    });
-    if (direct.ok) {
-      const canonicalFromUrl = extractCanonicalSlugFromFilmUrl(direct.url);
-      if (canonicalFromUrl) {
-        // If title/year context is provided, verify the landing page broadly matches.
-        if (filmTitle || filmYear) {
-          const html = await direct.text();
-          const titleMatch = html.match(/property="og:title"\s+content="([^"]+)"/i);
-          const pageMeta = parseTitleAndYear(titleMatch?.[1] ?? '');
-          const sameTitle = !filmTitle || normalizeTitle(pageMeta.title) === normalizeTitle(filmTitle);
-          const sameYear = !filmYear || pageMeta.year === filmYear;
-          if (sameTitle && sameYear) {
-            return canonicalFromUrl;
-          }
-        } else {
-          return canonicalFromUrl;
-        }
+  const contextual = hasContext(filmTitle, filmYear);
+
+  const directMeta = await fetchFilmPageMetaBySlug(filmSlug);
+  if (directMeta?.canonicalSlug) {
+    if (!contextual || pageMatchesContext(directMeta, filmTitle, filmYear)) {
+      return directMeta.canonicalSlug;
+    }
+  }
+
+  // If the base slug lands on a title collision and we have a year context,
+  // probe the common year-disambiguated variant before search fallback.
+  if (contextual && filmYear && filmYear > 0) {
+    const yearSlug = `${filmSlug}-${filmYear}`;
+    if (yearSlug !== filmSlug) {
+      const yearMeta = await fetchFilmPageMetaBySlug(yearSlug);
+      if (yearMeta?.canonicalSlug && pageMatchesContext(yearMeta, filmTitle, filmYear)) {
+        return yearMeta.canonicalSlug;
       }
     }
-  } catch {
-    // Fall through to search fallback.
   }
 
   // Fallback: search Letterboxd and pick the best title/year match.
