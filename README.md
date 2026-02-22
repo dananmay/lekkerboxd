@@ -23,7 +23,7 @@ No TMDb key is required for Store builds unless you explicitly switch to direct 
 
 ## GitHub Quick Start (TMDb Key Required)
 
-1. Download and unzip the latest release.
+1. Download and unzip the latest GitHub release.
 2. Load it via `chrome://extensions` -> `Load unpacked`.
 3. Open Lekkerboxd Settings.
 4. Add your TMDb API key in `TMDb API key (required for GitHub build)`.
