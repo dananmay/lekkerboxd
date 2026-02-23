@@ -13,10 +13,15 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - None yet.
 
 ### Fixed
-- Eliminate "Get Started" page flash on popup reopen by preloading cached state directly from local storage.
+- None yet.
 
 ### Security
 - None yet.
+
+## [1.0.4] - 2026-02-24
+
+### Fixed
+- Eliminate "Get Started" page flash on popup reopen by preloading cached state directly from local storage.
 
 ## [1.0.3] - 2026-02-21
 
