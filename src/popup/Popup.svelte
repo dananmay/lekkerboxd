@@ -22,6 +22,7 @@
   let error: string | null = $state(null);
   let username = $state('');
   let profile: UserProfile | null = $state(null);
+  let startupProfileLoading = $state(true);
   let justWatchRegionSetting = $state('auto');
   const currentMode = new URLSearchParams(window.location.search).get('mode');
   const isWindowMode = currentMode === 'window';
@@ -76,6 +77,7 @@
   }
 
   async function loadSettings() {
+    startupProfileLoading = true;
     const settings = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
     if (settings.launchMode === 'window' && !isWindowMode) {
       await chrome.runtime.sendMessage({ type: 'OPEN_APP_WINDOW' });
@@ -85,7 +87,12 @@
     justWatchRegionSetting = settings.justWatchRegion || 'auto';
     username = settings.letterboxdUsername || '';
 
-    if (username) {
+    if (!username) {
+      startupProfileLoading = false;
+      return;
+    }
+
+    {
       // Load startup state in parallel to reduce reopen latency.
       const [p, cached, generatingStatus, pendingGeneration, health] = await Promise.all([
         chrome.runtime.sendMessage({ type: 'GET_PROFILE', username }),
@@ -101,6 +108,7 @@
 
       if (p) profile = p;
       if (health && health.status) serviceHealth = health as ServiceHealth;
+      startupProfileLoading = false;
 
       // Restore cached recommendations so they persist across popup opens
       if (cached?.type === 'RECOMMENDATIONS_READY') {
@@ -514,7 +522,7 @@
             <button class="action-btn ghost" onclick={refreshAccountDetection}>I’m logged in, refresh</button>
           </div>
         </div>
-      {:else if !profile}
+      {:else if !profile && !startupProfileLoading}
         <div class="profile-card">
           <div class="profile-header-row">
             <a class="profile-username" href="https://letterboxd.com/{username}" target="_blank" rel="noopener">
