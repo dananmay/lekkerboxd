@@ -22,7 +22,6 @@
   let error: string | null = $state(null);
   let username = $state('');
   let profile: UserProfile | null = $state(null);
-  let startupProfileLoading = $state(true);
   let justWatchRegionSetting = $state('auto');
   const currentMode = new URLSearchParams(window.location.search).get('mode');
   const isWindowMode = currentMode === 'window';
@@ -77,7 +76,6 @@
   }
 
   async function loadSettings() {
-    startupProfileLoading = true;
     const settings = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
     if (settings.launchMode === 'window' && !isWindowMode) {
       await chrome.runtime.sendMessage({ type: 'OPEN_APP_WINDOW' });
@@ -87,12 +85,7 @@
     justWatchRegionSetting = settings.justWatchRegion || 'auto';
     username = settings.letterboxdUsername || '';
 
-    if (!username) {
-      startupProfileLoading = false;
-      return;
-    }
-
-    try {
+    if (username) {
       // Load startup state in parallel to reduce reopen latency.
       const [p, cached, generatingStatus, pendingGeneration, health] = await Promise.all([
         chrome.runtime.sendMessage({ type: 'GET_PROFILE', username }),
@@ -171,8 +164,6 @@
           stopLoading();
         }
       }
-    } finally {
-      startupProfileLoading = false;
     }
   }
 
@@ -496,9 +487,7 @@
   {:else}
     <main class="body">
       <!-- Profile section -->
-      {#if startupProfileLoading}
-        <!-- Suppress profile card until initial fetch resolves -->
-      {:else if !username}
+      {#if !username}
         <div class="welcome-card">
           <div class="welcome-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
