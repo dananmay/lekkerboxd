@@ -4,6 +4,9 @@
   import type { Recommendation, RecommendationResult, SourceError } from '../types/recommendation';
   import type { UserProfile } from '../types/letterboxd';
   import { JUSTWATCH_REGION_CODES } from '../lib/constants/justwatch-regions';
+  import { getSettings } from '../lib/storage/settings-store';
+  import { getProfile as getProfileDirect } from '../lib/storage/profile-store';
+  import { getCachedRecommendations } from '../lib/storage/cache-store';
   type ServiceHealth = { status: 'normal' | 'degraded'; reason: string | null; updatedAt: number };
 
   let showSettings = $state(false);
@@ -75,6 +78,28 @@
     return pending;
   }
 
+  async function preloadCachedState() {
+    const settings = await getSettings();
+    const cachedUsername = settings.letterboxdUsername || '';
+    if (!cachedUsername) return;
+
+    const [p, cached] = await Promise.all([
+      getProfileDirect(cachedUsername),
+      getCachedRecommendations(cachedUsername),
+    ]);
+
+    // Same ordering as loadSettings: profile before username
+    if (p) profile = p;
+    username = cachedUsername;
+
+    if (cached) {
+      recommendations = cached.recommendations;
+      sourceWarnings = cached.sourceErrors ?? [];
+      recommendationGeneratedAt = cached.generatedAt;
+      recommendationSeedCount = cached.seedCount;
+    }
+  }
+
   async function loadSettings() {
     const settings = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
     if (settings.launchMode === 'window' && !isWindowMode) {
@@ -83,91 +108,86 @@
       return;
     }
     justWatchRegionSetting = settings.justWatchRegion || 'auto';
-    const detectedUsername = settings.letterboxdUsername || '';
+    username = settings.letterboxdUsername || '';
 
-    if (!detectedUsername) {
-      username = '';
-      return;
-    }
+    if (username) {
+      // Load startup state in parallel to reduce reopen latency.
+      const [p, cached, generatingStatus, pendingGeneration, health] = await Promise.all([
+        chrome.runtime.sendMessage({ type: 'GET_PROFILE', username }),
+        chrome.runtime.sendMessage({
+          type: 'GET_RECOMMENDATIONS',
+          username,
+          forceRefresh: false,
+        }),
+        chrome.runtime.sendMessage({ type: 'GET_GENERATING_STATUS' }),
+        getPendingGeneration(),
+        chrome.runtime.sendMessage({ type: 'GET_SERVICE_HEALTH' }),
+      ]);
 
-    // Load startup state in parallel to reduce reopen latency.
-    const [p, cached, generatingStatus, pendingGeneration, health] = await Promise.all([
-      chrome.runtime.sendMessage({ type: 'GET_PROFILE', username: detectedUsername }),
-      chrome.runtime.sendMessage({
-        type: 'GET_RECOMMENDATIONS',
-        username: detectedUsername,
-        forceRefresh: false,
-      }),
-      chrome.runtime.sendMessage({ type: 'GET_GENERATING_STATUS' }),
-      getPendingGeneration(),
-      chrome.runtime.sendMessage({ type: 'GET_SERVICE_HEALTH' }),
-    ]);
+      if (p) profile = p;
+      if (health && health.status) serviceHealth = health as ServiceHealth;
 
-    // Set profile BEFORE username so the template never sees username+null profile.
-    if (p) profile = p;
-    if (health && health.status) serviceHealth = health as ServiceHealth;
-    username = detectedUsername;
+      // Restore cached recommendations so they persist across popup opens
+      if (cached?.type === 'RECOMMENDATIONS_READY') {
+        recommendations = cached.result.recommendations;
+        sourceWarnings = cached.result.sourceErrors ?? [];
+        recommendationGeneratedAt = cached.result.generatedAt;
+        recommendationSeedCount = cached.result.seedCount;
 
-    // Restore cached recommendations so they persist across popup opens
-    if (cached?.type === 'RECOMMENDATIONS_READY') {
-      recommendations = cached.result.recommendations;
-      sourceWarnings = cached.result.sourceErrors ?? [];
-      recommendationGeneratedAt = cached.result.generatedAt;
-      recommendationSeedCount = cached.result.seedCount;
-
-      // Restore watchlist button state for films added via the extension
-      const stored = await chrome.storage.local.get('lb_rec_watchlist_adds');
-      const addedSlugs: string[] = (stored['lb_rec_watchlist_adds'] as string[]) ?? [];
-      if (addedSlugs.length > 0) {
-        const slugSet = new Set(addedSlugs);
-        for (const rec of recommendations) {
-          const slug = extractSlugFromUrl(recLetterboxdUrl(rec));
-          if (slug && slugSet.has(slug)) {
-            watchlistState[rec.tmdbId] = 'added';
+        // Restore watchlist button state for films added via the extension
+        const stored = await chrome.storage.local.get('lb_rec_watchlist_adds');
+        const addedSlugs: string[] = (stored['lb_rec_watchlist_adds'] as string[]) ?? [];
+        if (addedSlugs.length > 0) {
+          const slugSet = new Set(addedSlugs);
+          for (const rec of recommendations) {
+            const slug = extractSlugFromUrl(recLetterboxdUrl(rec));
+            if (slug && slugSet.has(slug)) {
+              watchlistState[rec.tmdbId] = 'added';
+            }
           }
         }
       }
-    }
 
-    // If cache is newer than the pending marker, a previous run already finished.
-    // Clear stale pending state so we don't trigger an unnecessary force refresh.
-    if (
-      cached?.type === 'RECOMMENDATIONS_READY'
-      && pendingGeneration?.username === detectedUsername.toLowerCase()
-      && cached.result.generatedAt >= pendingGeneration.startedAt
-    ) {
-      await clearPendingGeneration();
-    }
+      // If cache is newer than the pending marker, a previous run already finished.
+      // Clear stale pending state so we don't trigger an unnecessary force refresh.
+      if (
+        cached?.type === 'RECOMMENDATIONS_READY'
+        && pendingGeneration?.username === username.toLowerCase()
+        && cached.result.generatedAt >= pendingGeneration.startedAt
+      ) {
+        await clearPendingGeneration();
+      }
 
-    if (
-      generatingStatus?.username === detectedUsername.toLowerCase()
-      || pendingGeneration?.username === detectedUsername.toLowerCase()
-    ) {
-      // A generation is in progress — show loading and attach to it
-      startRecommendationLoading();
-      error = null;
+      if (
+        generatingStatus?.username === username.toLowerCase()
+        || pendingGeneration?.username === username.toLowerCase()
+      ) {
+        // A generation is in progress — show loading and attach to it
+        startRecommendationLoading();
+        error = null;
 
-      try {
-        const result = await chrome.runtime.sendMessage({
-          type: 'GET_RECOMMENDATIONS',
-          username: detectedUsername,
-          forceRefresh: true, // Deduplicates in service worker — won't start a new generation
-        });
+        try {
+          const result = await chrome.runtime.sendMessage({
+            type: 'GET_RECOMMENDATIONS',
+            username,
+            forceRefresh: true, // Deduplicates in service worker — won't start a new generation
+          });
 
-        if (result?.type === 'ERROR') {
-          error = result.error;
-          await clearPendingGeneration();
-        } else if (result?.type === 'RECOMMENDATIONS_READY') {
-          recommendations = result.result.recommendations;
-          sourceWarnings = result.result.sourceErrors ?? [];
-          recommendationGeneratedAt = result.result.generatedAt;
-          recommendationSeedCount = result.result.seedCount;
-          await clearPendingGeneration();
+          if (result?.type === 'ERROR') {
+            error = result.error;
+            await clearPendingGeneration();
+          } else if (result?.type === 'RECOMMENDATIONS_READY') {
+            recommendations = result.result.recommendations;
+            sourceWarnings = result.result.sourceErrors ?? [];
+            recommendationGeneratedAt = result.result.generatedAt;
+            recommendationSeedCount = result.result.seedCount;
+            await clearPendingGeneration();
+          }
+        } catch (e) {
+          error = e instanceof Error ? e.message : 'Failed to get recommendations';
+        } finally {
+          stopLoading();
         }
-      } catch (e) {
-        error = e instanceof Error ? e.message : 'Failed to get recommendations';
-      } finally {
-        stopLoading();
       }
     }
   }
@@ -460,7 +480,8 @@
     }
   }
 
-  // Load on mount
+  // Load on mount — preload from local storage for instant UI, then full load via service worker
+  preloadCachedState();
   loadSettings();
 </script>
 
