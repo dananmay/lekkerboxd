@@ -544,7 +544,7 @@
             Scan Profile
           {/if}
         </button>
-      {:else}
+      {:else if profile}
         <!-- Scanned profile compact bar -->
         <div class="profile-card scanned">
           <div class="profile-header-row">
