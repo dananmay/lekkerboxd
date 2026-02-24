@@ -312,8 +312,6 @@ async function handleMessage(
       return handleOpenLetterboxdFilm(
         message.tmdbId,
         message.filmSlug,
-        message.filmTitle,
-        message.filmYear,
       );
 
     case 'GET_GENERATING_STATUS':
@@ -753,17 +751,9 @@ async function resolveCanonicalFilmSlugCached(
 async function handleOpenLetterboxdFilm(
   tmdbId: number,
   filmSlug: string,
-  filmTitle?: string,
-  filmYear?: number,
 ): Promise<{ success: boolean; openedUrl: string }> {
-  let slugToOpen = filmSlug;
-  try {
-    slugToOpen = await resolveCanonicalFilmSlugCached(tmdbId, filmSlug, filmTitle, filmYear);
-  } catch {
-    // Keep best-effort fallback slug.
-  }
-
-  const openedUrl = `https://letterboxd.com/film/${slugToOpen}/`;
+  // Slug is already canonical from recommendation generation — open directly.
+  const openedUrl = `https://letterboxd.com/film/${filmSlug}/`;
   await chrome.tabs.create({ url: openedUrl });
   return { success: true, openedUrl };
 }
@@ -773,7 +763,8 @@ async function handleAddToWatchlist(
   filmTitle?: string,
   filmYear?: number,
 ): Promise<{ success: boolean; error?: string }> {
-  const canonicalSlug = await resolveCanonicalFilmSlug(filmSlug, filmTitle, filmYear);
+  // Slug is already canonical from recommendation generation — use directly.
+  const canonicalSlug = filmSlug;
 
   // Resolve the film's Letterboxd ID
   console.log(`[LB Recs BG] Watchlist: resolving LID for slug "${canonicalSlug}"`);
