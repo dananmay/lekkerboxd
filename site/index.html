@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lekkerboxd — Movie recommendations from your Letterboxd taste</title>
-    <meta name="description" content="Lekkerboxd scans your Letterboxd history and finds films you'll actually want to watch — not just whatever's trending." />
+    <meta name="description" content="Lekkerboxd turns your Letterboxd ratings and likes into scored, ranked film recommendations — built for your taste, not the crowd's." />
     <link rel="icon" type="image/png" href="./assets/lekkerboxd-favicon.png" />
     <style>
       :root {
@@ -33,8 +33,6 @@
 
       body {
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
         background:
           radial-gradient(900px 500px, #1a4530 0%, transparent 60%),
           radial-gradient(700px 500px, #1c2d44 0%, transparent 55%),
@@ -463,42 +461,6 @@
         color: #789;
       }
 
-      /* ── Feature strip ── */
-      .features {
-        width: min(1100px, 92vw);
-        margin: 0 auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 32px;
-        flex-wrap: wrap;
-      }
-
-      .feature-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #7a96ad;
-        font-size: 13px;
-        font-weight: 500;
-      }
-
-      .feature-icon { font-size: 16px; line-height: 1; }
-
-      .feature-sep {
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        background: #2e4256;
-        flex-shrink: 0;
-      }
-
-      .site-footer {
-        width: 100%;
-        margin-top: auto;
-        padding-top: 12px;
-        padding-bottom: 12px;
-      }
 
       /* ── Entrance animations ── */
       @keyframes fadeUp {
@@ -514,11 +476,6 @@
       @keyframes shimmer {
         0%   { background-position: -200% center; }
         100% { background-position: 200% center; }
-      }
-
-      @keyframes featureFadeUp {
-        from { opacity: 0; transform: translateY(10px); }
-        to   { opacity: 1; transform: translateY(0); }
       }
 
       /* Left column staggered entrance */
@@ -564,17 +521,6 @@
         animation: shimmer 2s ease-in-out 0.8s 1 both;
       }
 
-      /* Feature strip fade-up */
-      .feature-item, .feature-sep {
-        opacity: 0;
-        animation: featureFadeUp 0.5s ease-out both;
-      }
-      .features > :nth-child(1) { animation-delay: 0.6s; }
-      .features > :nth-child(2) { animation-delay: 0.7s; }
-      .features > :nth-child(3) { animation-delay: 0.8s; }
-      .features > :nth-child(4) { animation-delay: 0.9s; }
-      .features > :nth-child(5) { animation-delay: 1.0s; }
-
       /* ── Responsive ── */
       @media (max-width: 860px) {
         .stage {
@@ -584,27 +530,6 @@
         }
 
         .popup-chrome { width: min(400px, 100%); }
-        .site-footer {
-          margin-top: 30px;
-          padding-bottom: 20px;
-          padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
-        }
-        .features {
-          width: min(1100px, 94vw);
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 12px;
-          justify-items: center;
-          align-items: start;
-        }
-        .feature-item {
-          flex-direction: column;
-          gap: 6px;
-          text-align: center;
-          font-size: 12px;
-          line-height: 1.25;
-        }
-        .feature-sep { display: none; }
         .subtext { max-width: none; }
       }
 
@@ -629,7 +554,7 @@
           --glow-size: 60px;
         }
         .badge, .headline, .subtext, .cta-row, .social-proof,
-        .popup-wrap, .p-rec-card, .feature-item, .feature-sep {
+        .popup-wrap, .p-rec-card {
           opacity: 1;
           animation: none;
         }
@@ -654,17 +579,17 @@
       <!-- Left: copy -->
       <div class="copy">
         <div class="badge">
-          Free Chrome Extension
+          Free · Works with any Letterboxd account
         </div>
 
         <h1 class="headline">
-          Your Letterboxd taste,<br>
-          turned into<br>
-          <em>recommendations.</em>
+          A recommendation algorithm<br>
+          built for an audience<br>
+          of one — <em>you.</em>
         </h1>
 
         <p class="subtext">
-          Scan your profile. Get <strong>films you'll actually want to watch</strong> —
+          Get <strong>films you'll actually want to watch</strong> —
           not just whatever's trending. Built on your ratings, likes, and history.
         </p>
 
@@ -686,6 +611,8 @@
 
         <p class="social-proof">
           Open source
+          <span class="social-proof-dot"></span>
+          Your data stays local
           <span class="social-proof-dot"></span>
           No account needed
         </p>
@@ -814,24 +741,6 @@
       </div>
     </main>
 
-    <footer class="site-footer">
-      <section class="features" aria-label="Features">
-        <div class="feature-item">
-          <span class="feature-icon">🎬</span>
-          Built on your history
-        </div>
-        <span class="feature-sep"></span>
-        <div class="feature-item">
-          <span class="feature-icon">⭐</span>
-          Multi-source scoring
-        </div>
-        <span class="feature-sep"></span>
-        <div class="feature-item">
-          <span class="feature-icon">✚</span>
-          One-click watchlist
-        </div>
-      </section>
-    </footer>
 
     <script>
       var prefersReducedMotion = window.matchMedia
