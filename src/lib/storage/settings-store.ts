@@ -1,5 +1,7 @@
 export type PopularityFilter = 0 | 1 | 2 | 3;
 
+export type SeedSource = 'top-rated' | 'custom-list';
+
 export interface Settings {
   tmdbApiKey: string;
   launchMode: 'popup' | 'window';
@@ -8,6 +10,8 @@ export interface Settings {
   maxSeeds: number;
   maxRecommendations: number;
   popularityFilter: PopularityFilter;
+  seedSource: SeedSource;
+  customListUrl: string;
 }
 
 const SETTINGS_KEY = 'lb_rec_settings';
@@ -23,6 +27,8 @@ export async function getSettings(): Promise<Settings> {
     maxSeeds: typeof stored.maxSeeds === 'number' && stored.maxSeeds > 0 ? stored.maxSeeds : 15,
     maxRecommendations: typeof stored.maxRecommendations === 'number' && stored.maxRecommendations > 0 ? stored.maxRecommendations : 20,
     popularityFilter: typeof stored.popularityFilter === 'number' ? stored.popularityFilter as PopularityFilter : 1,
+    seedSource: stored.seedSource === 'custom-list' ? 'custom-list' as SeedSource : 'top-rated' as SeedSource,
+    customListUrl: typeof stored.customListUrl === 'string' ? stored.customListUrl : '',
   };
 }
 
@@ -36,6 +42,8 @@ export async function saveSettings(settings: Partial<Settings>): Promise<Setting
     maxSeeds: settings.maxSeeds ?? current.maxSeeds,
     maxRecommendations: settings.maxRecommendations ?? current.maxRecommendations,
     popularityFilter: settings.popularityFilter ?? current.popularityFilter,
+    seedSource: settings.seedSource ?? current.seedSource,
+    customListUrl: settings.customListUrl ?? current.customListUrl,
   };
   await chrome.storage.local.set({ [SETTINGS_KEY]: updated });
   return updated;

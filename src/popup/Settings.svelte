@@ -21,6 +21,13 @@
   let scanStatus = $state('');
   const githubDistribution = isGithubDistribution();
 
+  // Custom list seed source state
+  let seedSource = $state<'top-rated' | 'custom-list'>('top-rated');
+  let customListUrl = $state('');
+  let customListStatus = $state('');
+  let customListLoading = $state(false);
+  let customListFilmCount = $state<number | null>(null);
+
   async function loadSettings() {
     const settings = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
     letterboxdUsername = settings.letterboxdUsername || '';
@@ -30,11 +37,64 @@
     maxSeeds = settings.maxSeeds ?? 15;
     maxRecommendations = settings.maxRecommendations ?? 20;
     popularityFilter = settings.popularityFilter ?? 1;
+    seedSource = settings.seedSource || 'top-rated';
+    customListUrl = settings.customListUrl || '';
+
+    // Load custom list film count for display
+    if (seedSource === 'custom-list') {
+      const listData = await chrome.runtime.sendMessage({ type: 'GET_CUSTOM_LIST' });
+      if (listData) {
+        customListFilmCount = listData.films.length;
+      }
+    }
   }
 
   async function saveSetting(key: string, value: number) {
     await chrome.runtime.sendMessage({ type: 'SAVE_SETTINGS', settings: { [key]: value } });
     onSaved();
+  }
+
+  async function saveSeedSource(source: 'top-rated' | 'custom-list') {
+    seedSource = source;
+    await chrome.runtime.sendMessage({
+      type: 'SAVE_SETTINGS',
+      settings: { seedSource: source },
+    });
+    onSaved();
+  }
+
+  async function scrapeCustomList() {
+    const url = customListUrl.trim();
+    if (!url) return;
+
+    customListLoading = true;
+    customListStatus = 'Scanning list...';
+
+    try {
+      const result = await chrome.runtime.sendMessage({
+        type: 'SCRAPE_CUSTOM_LIST',
+        url,
+      });
+
+      if (result.error) {
+        customListStatus = result.error;
+        customListFilmCount = null;
+      } else {
+        const cappedNote = result.totalFilms > result.films
+          ? ` (using first ${result.films} of ${result.totalFilms})`
+          : '';
+        customListStatus = `Found ${result.films} films${cappedNote}`;
+        customListFilmCount = result.films;
+        // Auto-switch to custom list mode
+        await saveSeedSource('custom-list');
+      }
+    } catch {
+      customListStatus = 'Failed to scan list';
+      customListFilmCount = null;
+    } finally {
+      customListLoading = false;
+      setTimeout(() => { customListStatus = ''; }, 5000);
+    }
   }
 
   async function saveTmdbApiKey() {
@@ -174,18 +234,67 @@
     <div class="sliders">
       <div class="slider-group">
         <div class="slider-header">
-          <span class="slider-label">Seed films</span>
-          <span class="slider-value">{maxSeeds}</span>
+          <span class="slider-label">Seed source</span>
         </div>
-        <input
-          type="range"
-          min="5"
-          max="30"
-          step="1"
-          bind:value={maxSeeds}
-          onchange={() => saveSetting('maxSeeds', maxSeeds)}
-        />
-        <p class="slider-hint">Number of your top films used to find recommendations</p>
+        <div class="seed-source-options">
+          <button
+            class="seed-source-btn"
+            class:active={seedSource === 'top-rated'}
+            onclick={() => saveSeedSource('top-rated')}
+          >
+            My top films
+          </button>
+          <button
+            class="seed-source-btn"
+            class:active={seedSource === 'custom-list'}
+            onclick={() => { if (customListFilmCount) saveSeedSource('custom-list'); }}
+          >
+            Custom list
+          </button>
+        </div>
+
+        {#if seedSource === 'top-rated'}
+          <div class="slider-header" style="margin-top: 8px;">
+            <span class="slider-label">Seed count</span>
+            <span class="slider-value">{maxSeeds}</span>
+          </div>
+          <input
+            type="range"
+            min="5"
+            max="30"
+            step="1"
+            bind:value={maxSeeds}
+            onchange={() => saveSetting('maxSeeds', maxSeeds)}
+          />
+          <p class="slider-hint">Number of your top films used to find recommendations</p>
+        {:else}
+          <div class="custom-list-input-row" style="margin-top: 8px;">
+            <input
+              type="url"
+              class="custom-list-input"
+              placeholder="https://letterboxd.com/user/list/name/"
+              bind:value={customListUrl}
+              onkeydown={(e: KeyboardEvent) => { if (e.key === 'Enter') scrapeCustomList(); }}
+            />
+            <button
+              class="btn btn-secondary btn-sm"
+              onclick={scrapeCustomList}
+              disabled={customListLoading || !customListUrl.trim()}
+            >
+              {customListLoading ? '...' : 'Scan'}
+            </button>
+          </div>
+          {#if customListFilmCount !== null}
+            <p class="slider-hint custom-list-ok">
+              Using {customListFilmCount} film{customListFilmCount !== 1 ? 's' : ''} from list (max 30)
+            </p>
+          {:else}
+            <p class="slider-hint">Paste a Letterboxd list URL to use as seed films</p>
+          {/if}
+          {#if customListStatus}
+            <p class="custom-list-status">{customListStatus}</p>
+          {/if}
+        {/if}
       </div>
 
       <div class="slider-group">
@@ -918,5 +1027,74 @@
     border-color: #f88;
     color: #f88;
     background: rgba(255, 80, 80, 0.1);
+  }
+
+  /* ── Seed source toggle ── */
+  .seed-source-options {
+    display: flex;
+    gap: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #2C3641;
+  }
+
+  .seed-source-btn {
+    flex: 1;
+    padding: 7px 4px;
+    background: #14181C;
+    border: none;
+    color: #567;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    border-right: 1px solid #2C3641;
+  }
+
+  .seed-source-btn:last-child {
+    border-right: none;
+  }
+
+  .seed-source-btn:hover:not(.active) {
+    color: #9AB;
+    background: #1B2028;
+  }
+
+  .seed-source-btn.active {
+    background: #00E054;
+    color: #fff;
+  }
+
+  .custom-list-input-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .custom-list-input {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1px solid #2C3641;
+    border-radius: 6px;
+    background: #10151C;
+    color: #DDE7EE;
+    font-size: 11px;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .custom-list-input:focus {
+    border-color: #4D7A96;
+  }
+
+  .custom-list-ok {
+    color: #00E054;
+  }
+
+  .custom-list-status {
+    margin: 2px 0 0;
+    font-size: 9px;
+    color: #00E054;
   }
 </style>

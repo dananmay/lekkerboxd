@@ -58,6 +58,8 @@ export interface RecommendationOptions {
   maxSeeds?: number;
   maxRecommendations?: number;
   popularityFilter?: number;
+  /** When provided, these seeds are used directly instead of selecting from the user's profile. */
+  customSeeds?: ScrapedFilm[];
 }
 
 interface ScoredCandidate {
@@ -91,7 +93,9 @@ export async function generateRecommendations(
   const maxRecommendations = options?.maxRecommendations ?? DEFAULT_MAX_RECOMMENDATIONS;
   const popularityFilter = options?.popularityFilter ?? 1;
 
-  const seeds = selectSeeds(profile, maxSeeds);
+  const seeds = options?.customSeeds && options.customSeeds.length > 0
+    ? options.customSeeds
+    : selectSeeds(profile, maxSeeds);
   return generateRecommendationsFromSeeds(
     profile,
     apiKey,

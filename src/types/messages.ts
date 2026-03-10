@@ -43,6 +43,8 @@ export interface SaveSettingsMessage {
     maxSeeds?: number;
     maxRecommendations?: number;
     popularityFilter?: number;
+    seedSource?: 'top-rated' | 'custom-list';
+    customListUrl?: string;
   };
 }
 
@@ -100,6 +102,15 @@ export interface GetBlocklistMessage {
   type: 'GET_BLOCKLIST';
 }
 
+export interface ScrapeCustomListMessage {
+  type: 'SCRAPE_CUSTOM_LIST';
+  url: string;
+}
+
+export interface GetCustomListMessage {
+  type: 'GET_CUSTOM_LIST';
+}
+
 // Background -> Content script / Popup messages
 export interface ScrapeProgressMessage {
   type: 'SCRAPE_PROGRESS';
@@ -137,7 +148,9 @@ export type MessageToBackground =
   | GetServiceHealthMessage
   | BlockFilmMessage
   | UnblockFilmMessage
-  | GetBlocklistMessage;
+  | GetBlocklistMessage
+  | ScrapeCustomListMessage
+  | GetCustomListMessage;
 
 export type MessageFromBackground =
   | ScrapeProgressMessage

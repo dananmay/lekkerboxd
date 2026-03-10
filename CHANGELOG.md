@@ -12,6 +12,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Toast notification when a film is blocked.
 - Over-generation buffer (+10) so blocking films does not reduce the visible recommendation count below the user's setting.
 - Non-intrusive Chrome Web Store review prompt banner shown after 3+ recommendation generations and 1+ film click-through (Store builds only). Dismissable with 14-day cooldown; permanently hidden after 3 dismisses or clicking the review link.
+- Custom list seed source: paste any Letterboxd list URL to use its films as seeds instead of your top-rated films. Toggle between "My top films" and "Custom list" in Settings. Lists are capped at 30 films and auto-refreshed after 1 hour.
 
 ### Changed
 - None yet.

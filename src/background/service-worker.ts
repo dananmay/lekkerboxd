@@ -14,6 +14,7 @@ import { doesFilmSlugMatchContext, resolveCanonicalFilmSlug } from '../lib/utils
 import { canonicalizeRecommendationUrls } from '../lib/utils/recommendation-url-canonicalizer';
 import { applyCanonicalSlugCachePatch, resolveCanonicalSlugWithCachePolicy } from '../lib/utils/canonical-slug-cache-policy';
 import { addToBlocklist, removeFromBlocklist, getBlocklist } from '../lib/storage/blocklist-store';
+import { getCustomList, saveCustomList, isCustomListStale } from '../lib/storage/custom-list-store';
 import { withStorageLock } from '../lib/storage/storage-mutex';
 import { ensureCacheSchemaMetadata } from '../lib/storage/cache-schema';
 import { debugWarn } from '../lib/utils/debug-log';
@@ -25,6 +26,7 @@ const APP_WINDOW_MIN_WIDTH = 380;
 const APP_WINDOW_MIN_HEIGHT = 560;
 const APP_WINDOW_DEFAULT_BOUNDS = { width: 420, height: 760 };
 const BLOCKLIST_BUFFER = 10;
+const CUSTOM_LIST_MAX_FILMS = 30;
 const BOUNDS_SAVE_DEBOUNCE_MS = 220;
 
 // In-flight recommendation generation tracking.
@@ -238,6 +240,8 @@ const VALID_MESSAGE_TYPES = new Set([
   'BLOCK_FILM',
   'UNBLOCK_FILM',
   'GET_BLOCKLIST',
+  'SCRAPE_CUSTOM_LIST',
+  'GET_CUSTOM_LIST',
 ]);
 
 // Handle messages from content scripts and popup
@@ -339,6 +343,12 @@ async function handleMessage(
 
     case 'GET_BLOCKLIST':
       return getBlocklist();
+
+    case 'SCRAPE_CUSTOM_LIST':
+      return handleScrapeCustomList(message.url);
+
+    case 'GET_CUSTOM_LIST':
+      return getCustomList();
 
     default:
       return { error: 'Unknown message type' };
@@ -456,16 +466,95 @@ async function handleScrapeProfile(username: string): Promise<{ status: string }
   return { status: 'complete' };
 }
 
+async function handleScrapeCustomList(
+  listUrl: string,
+): Promise<{ films: number; totalFilms: number; error?: string }> {
+  // Validate URL format
+  const listMatch = listUrl.match(
+    /^https?:\/\/(?:www\.)?letterboxd\.com\/([^/]+)\/list\/([^/]+)\/?$/,
+  );
+  if (!listMatch) {
+    return {
+      films: 0,
+      totalFilms: 0,
+      error: 'Invalid Letterboxd list URL. Expected format: https://letterboxd.com/username/list/list-name/',
+    };
+  }
+
+  const [, listOwner, listSlug] = listMatch;
+  const baseUrl = `https://letterboxd.com/${listOwner}/list/${listSlug}/`;
+
+  try {
+    const response = await fetch(baseUrl);
+    if (!response.ok) {
+      return {
+        films: 0,
+        totalFilms: 0,
+        error: `Could not fetch list (HTTP ${response.status}). Make sure the list exists and is public.`,
+      };
+    }
+
+    const html = await response.text();
+    let allFilms = parseFilmsFromHTML(html);
+    const totalPages = parsePaginationFromHTML(html);
+
+    // Fetch remaining pages until we hit the cap
+    for (let page = 2; page <= totalPages && allFilms.length < CUSTOM_LIST_MAX_FILMS; page++) {
+      try {
+        const pageResponse = await fetch(`${baseUrl}page/${page}/`);
+        if (!pageResponse.ok) continue;
+        const pageHtml = await pageResponse.text();
+        const pageFilms = parseFilmsFromHTML(pageHtml);
+        allFilms = allFilms.concat(pageFilms);
+        // Rate limit: 1.5 seconds between page fetches
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      } catch {
+        // Continue on individual page errors
+      }
+    }
+
+    const totalFilms = allFilms.length;
+    const capped = allFilms.slice(0, CUSTOM_LIST_MAX_FILMS);
+
+    await saveCustomList({
+      url: listUrl,
+      films: capped,
+      filmCount: totalFilms,
+      scrapedAt: Date.now(),
+    });
+
+    // Persist the URL in settings for reload persistence
+    await saveSettings({ customListUrl: listUrl });
+
+    return { films: capped.length, totalFilms };
+  } catch (err) {
+    return {
+      films: 0,
+      totalFilms: 0,
+      error: `Failed to fetch list: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
 /**
  * Build a fingerprint string from the settings and profile state that affect
  * recommendation output. If nothing in this fingerprint has changed, the
  * cached results are still valid and we can skip the expensive regeneration.
  */
 function buildFingerprint(
-  settings: { maxSeeds: number; maxRecommendations: number; popularityFilter: number },
+  settings: {
+    maxSeeds: number;
+    maxRecommendations: number;
+    popularityFilter: number;
+    seedSource: string;
+    customListUrl: string;
+  },
   profileScrapedAt: number,
 ): string {
-  return `${settings.maxSeeds}:${settings.maxRecommendations}:${settings.popularityFilter}:${profileScrapedAt}:${SCORING_MODEL_VERSION}`;
+  const seedPart = settings.seedSource === 'custom-list'
+    ? `custom:${settings.customListUrl}`
+    : `top:${settings.maxSeeds}`;
+  return `${seedPart}:${settings.maxRecommendations}:${settings.popularityFilter}:${profileScrapedAt}:${SCORING_MODEL_VERSION}`;
 }
 
 async function handleGetRecommendations(
@@ -541,24 +630,51 @@ async function executeGeneration(
       profile = await getProfile(username);
     }
 
-    if (!profile || (profile.ratedFilms.length === 0 && profile.likedFilms.length === 0)) {
+    // In custom-list mode, a profile with no rated/liked films is fine — seeds come
+    // from the list. The profile is still needed for watched-film exclusion.
+    if (
+      settings.seedSource !== 'custom-list'
+      && (!profile || (profile.ratedFilms.length === 0 && profile.likedFilms.length === 0))
+    ) {
       return {
         type: 'ERROR',
         error: `No rated or liked films found for "${username}". Visit their Letterboxd profile first.`,
       };
     }
 
+    // Resolve custom seeds if using custom-list mode
+    let customSeeds: ScrapedFilm[] | undefined;
+    if (settings.seedSource === 'custom-list') {
+      let listData = await getCustomList();
+
+      // Re-scrape if stale or missing
+      if ((!listData || isCustomListStale(listData)) && settings.customListUrl) {
+        await handleScrapeCustomList(settings.customListUrl);
+        listData = await getCustomList();
+      }
+
+      if (!listData || listData.films.length === 0) {
+        return {
+          type: 'ERROR',
+          error: 'Custom list has no films. Check the list URL in Settings.',
+        };
+      }
+
+      customSeeds = listData.films;
+    }
+
+    const fingerprintSettings = {
+      maxSeeds: settings.maxSeeds || 15,
+      maxRecommendations: settings.maxRecommendations || 20,
+      popularityFilter: settings.popularityFilter ?? 1,
+      seedSource: settings.seedSource || 'top-rated',
+      customListUrl: settings.customListUrl || '',
+    };
+
     // Smart refresh: skip regeneration if settings + profile haven't changed
     const cached = await getCachedRecommendations(username);
     if (cached) {
-      const currentFingerprint = buildFingerprint(
-        {
-          maxSeeds: settings.maxSeeds || 15,
-          maxRecommendations: settings.maxRecommendations || 20,
-          popularityFilter: settings.popularityFilter ?? 1,
-        },
-        profile.scrapedAt,
-      );
+      const currentFingerprint = buildFingerprint(fingerprintSettings, profile.scrapedAt);
       if (cached.settingsFingerprint === currentFingerprint) {
         const { changed } = await canonicalizeRecommendationUrls(cached, async (rec, currentSlug) => (
           resolveCanonicalFilmSlugCached(
@@ -581,6 +697,7 @@ async function executeGeneration(
       maxSeeds: settings.maxSeeds || 15,
       maxRecommendations: (settings.maxRecommendations || 20) + BLOCKLIST_BUFFER,
       popularityFilter: settings.popularityFilter ?? 1,
+      customSeeds,
     });
 
     await canonicalizeRecommendationUrls(result, async (rec, currentSlug) => (
@@ -593,14 +710,7 @@ async function executeGeneration(
     ));
 
     // Stamp with fingerprint for future comparisons
-    result.settingsFingerprint = buildFingerprint(
-      {
-        maxSeeds: settings.maxSeeds || 15,
-        maxRecommendations: settings.maxRecommendations || 20,
-        popularityFilter: settings.popularityFilter ?? 1,
-      },
-      profile.scrapedAt,
-    );
+    result.settingsFingerprint = buildFingerprint(fingerprintSettings, profile.scrapedAt);
 
     // Cache after fingerprint is set
     await cacheRecommendations(result);
