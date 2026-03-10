@@ -13,6 +13,7 @@ import { getProfilePageUrl, letterboxdFilmUrl } from '../lib/utils/url-utils';
 import { doesFilmSlugMatchContext, resolveCanonicalFilmSlug } from '../lib/utils/letterboxd-slug-resolver';
 import { canonicalizeRecommendationUrls } from '../lib/utils/recommendation-url-canonicalizer';
 import { applyCanonicalSlugCachePatch, resolveCanonicalSlugWithCachePolicy } from '../lib/utils/canonical-slug-cache-policy';
+import { addToBlocklist, removeFromBlocklist, getBlocklist } from '../lib/storage/blocklist-store';
 import { withStorageLock } from '../lib/storage/storage-mutex';
 import { ensureCacheSchemaMetadata } from '../lib/storage/cache-schema';
 import { debugWarn } from '../lib/utils/debug-log';
@@ -23,6 +24,7 @@ const APP_WINDOW_BOUNDS_KEY = 'lb_rec_app_window_bounds';
 const APP_WINDOW_MIN_WIDTH = 380;
 const APP_WINDOW_MIN_HEIGHT = 560;
 const APP_WINDOW_DEFAULT_BOUNDS = { width: 420, height: 760 };
+const BLOCKLIST_BUFFER = 10;
 const BOUNDS_SAVE_DEBOUNCE_MS = 220;
 
 // In-flight recommendation generation tracking.
@@ -233,6 +235,9 @@ const VALID_MESSAGE_TYPES = new Set([
   'OPEN_LETTERBOXD_FILM',
   'GET_GENERATING_STATUS',
   'GET_SERVICE_HEALTH',
+  'BLOCK_FILM',
+  'UNBLOCK_FILM',
+  'GET_BLOCKLIST',
 ]);
 
 // Handle messages from content scripts and popup
@@ -319,6 +324,21 @@ async function handleMessage(
 
     case 'GET_SERVICE_HEALTH':
       return getServiceHealth();
+
+    case 'BLOCK_FILM':
+      return addToBlocklist({
+        tmdbId: message.tmdbId,
+        title: message.title,
+        year: message.year,
+        posterPath: message.posterPath,
+        blockedAt: Date.now(),
+      });
+
+    case 'UNBLOCK_FILM':
+      return removeFromBlocklist(message.tmdbId);
+
+    case 'GET_BLOCKLIST':
+      return getBlocklist();
 
     default:
       return { error: 'Unknown message type' };
@@ -555,10 +575,11 @@ async function executeGeneration(
       }
     }
 
-    // Generate recommendations
+    // Generate recommendations (over-generate by BLOCKLIST_BUFFER so blocked films
+    // don't reduce the visible count below the user's maxRecommendations setting)
     const result = await generateRecommendations(profile, settings.tmdbApiKey, undefined, {
       maxSeeds: settings.maxSeeds || 15,
-      maxRecommendations: settings.maxRecommendations || 20,
+      maxRecommendations: (settings.maxRecommendations || 20) + BLOCKLIST_BUFFER,
       popularityFilter: settings.popularityFilter ?? 1,
     });
 

@@ -83,6 +83,23 @@ export interface GetServiceHealthMessage {
   type: 'GET_SERVICE_HEALTH';
 }
 
+export interface BlockFilmMessage {
+  type: 'BLOCK_FILM';
+  tmdbId: number;
+  title: string;
+  year: number;
+  posterPath: string | null;
+}
+
+export interface UnblockFilmMessage {
+  type: 'UNBLOCK_FILM';
+  tmdbId: number;
+}
+
+export interface GetBlocklistMessage {
+  type: 'GET_BLOCKLIST';
+}
+
 // Background -> Content script / Popup messages
 export interface ScrapeProgressMessage {
   type: 'SCRAPE_PROGRESS';
@@ -117,7 +134,10 @@ export type MessageToBackground =
   | AddToWatchlistMessage
   | OpenLetterboxdFilmMessage
   | GetGeneratingStatusMessage
-  | GetServiceHealthMessage;
+  | GetServiceHealthMessage
+  | BlockFilmMessage
+  | UnblockFilmMessage
+  | GetBlocklistMessage;
 
 export type MessageFromBackground =
   | ScrapeProgressMessage

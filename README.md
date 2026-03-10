@@ -38,6 +38,7 @@ Get a TMDb key: [TMDb API settings](https://www.themoviedb.org/settings/api)
 - Aggregates candidates from TMDb, Reddit, and Taste.io.
 - Canonicalizes Letterboxd slugs before popup render for correct ambiguous-title links.
 - Adds films to Letterboxd watchlist from the popup.
+- Block individual recommendations to hide them from future results. Manage blocked films in Settings.
 - Opens JustWatch links with region-aware routing.
 
 ## Build and Artifacts

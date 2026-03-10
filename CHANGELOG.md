@@ -7,7 +7,10 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 ## [Unreleased]
 
 ### Added
-- None yet.
+- Film blocklist: hide individual recommendations via an X button on the poster. Blocked films are stored in `chrome.storage.local` and filtered out before rendering.
+- Manage blocked films section in Settings with poster thumbnails and one-click unblock.
+- Toast notification when a film is blocked.
+- Over-generation buffer (+10) so blocking films does not reduce the visible recommendation count below the user's setting.
 
 ### Changed
 - None yet.

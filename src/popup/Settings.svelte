@@ -109,7 +109,30 @@
     });
   }
 
+  // Blocklist management
+  interface BlockedFilmDisplay {
+    tmdbId: number;
+    title: string;
+    year: number;
+    posterPath: string | null;
+    blockedAt: number;
+  }
+
+  let blockedFilms: BlockedFilmDisplay[] = $state([]);
+
+  async function loadBlocklist() {
+    const list = await chrome.runtime.sendMessage({ type: 'GET_BLOCKLIST' });
+    blockedFilms = Array.isArray(list) ? list : [];
+  }
+
+  async function unblockFilm(tmdbId: number) {
+    await chrome.runtime.sendMessage({ type: 'UNBLOCK_FILM', tmdbId });
+    blockedFilms = blockedFilms.filter(f => f.tmdbId !== tmdbId);
+    onSaved();
+  }
+
   loadSettings();
+  loadBlocklist();
 </script>
 
   <div class="settings">
@@ -226,6 +249,43 @@
       {/if}
     </p>
   </div>
+
+  {#if blockedFilms.length > 0}
+    <div class="blocklist-section">
+      <span class="blocklist-title">Blocked films ({blockedFilms.length})</span>
+      <p class="blocklist-hint">These films won't appear in recommendations</p>
+      <div class="blocklist-items">
+        {#each blockedFilms as film (film.tmdbId)}
+          <div class="blocklist-item">
+            {#if film.posterPath}
+              <img
+                class="blocklist-poster"
+                src="https://image.tmdb.org/t/p/w92{film.posterPath}"
+                alt={film.title}
+              />
+            {:else}
+              <div class="blocklist-poster-placeholder"></div>
+            {/if}
+            <div class="blocklist-info">
+              <span class="blocklist-film-title">{film.title}</span>
+              {#if film.year}
+                <span class="blocklist-film-year">{film.year}</span>
+              {/if}
+            </div>
+            <button
+              class="blocklist-unblock-btn"
+              onclick={() => unblockFilm(film.tmdbId)}
+              title="Unblock"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        {/each}
+      </div>
+    </div>
+  {/if}
 
   <div class="advanced-wrap">
     <button
@@ -757,5 +817,106 @@
     color: #00E054;
     text-align: center;
     padding: 4px;
+  }
+
+  /* ── Blocklist ── */
+  .blocklist-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    background: #1B2028;
+    border: 1px solid #2C3641;
+    border-radius: 6px;
+  }
+
+  .blocklist-title {
+    font-size: 11px;
+    color: #9AB;
+    font-weight: 600;
+  }
+
+  .blocklist-hint {
+    margin: 0;
+    font-size: 9px;
+    color: #567;
+  }
+
+  .blocklist-items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .blocklist-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    background: #14181C;
+    border-radius: 6px;
+    border: 1px solid #2C3641;
+  }
+
+  .blocklist-poster {
+    width: 28px;
+    height: 42px;
+    border-radius: 3px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .blocklist-poster-placeholder {
+    width: 28px;
+    height: 42px;
+    border-radius: 3px;
+    background: #2C3440;
+    flex-shrink: 0;
+  }
+
+  .blocklist-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .blocklist-film-title {
+    font-size: 11px;
+    color: #DEF;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .blocklist-film-year {
+    font-size: 9px;
+    color: #567;
+  }
+
+  .blocklist-unblock-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid #2C3641;
+    background: transparent;
+    color: #567;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+
+  .blocklist-unblock-btn:hover {
+    border-color: #f88;
+    color: #f88;
+    background: rgba(255, 80, 80, 0.1);
   }
 </style>

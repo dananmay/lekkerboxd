@@ -37,6 +37,13 @@
   let watchlistState: Record<number, 'idle' | 'loading' | 'added' | 'opened'> = $state({});
   const justWatchDirectUrlValidityCache = new Set<string>();
 
+  // Blocklist state
+  let blockingTmdbId: number | null = $state(null);
+  let maxRecommendationsSetting = 20;
+  let toastMessage = $state('');
+  let toastVisible = $state(false);
+  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+
   function startRecommendationLoading(): void {
     loading = true;
     loadingMode = 'recommending';
@@ -81,6 +88,7 @@
   async function preloadCachedState() {
     const settings = await getSettings();
     const cachedUsername = settings.letterboxdUsername || '';
+    maxRecommendationsSetting = settings.maxRecommendations ?? 20;
     if (!cachedUsername) return;
 
     const [p, cached] = await Promise.all([
@@ -93,7 +101,7 @@
     username = cachedUsername;
 
     if (cached) {
-      recommendations = cached.recommendations;
+      recommendations = await filterBlockedFilms(cached.recommendations, maxRecommendationsSetting);
       sourceWarnings = cached.sourceErrors ?? [];
       recommendationGeneratedAt = cached.generatedAt;
       recommendationSeedCount = cached.seedCount;
@@ -108,6 +116,7 @@
       return;
     }
     justWatchRegionSetting = settings.justWatchRegion || 'auto';
+    maxRecommendationsSetting = settings.maxRecommendations ?? 20;
     username = settings.letterboxdUsername || '';
 
     if (username) {
@@ -129,7 +138,7 @@
 
       // Restore cached recommendations so they persist across popup opens
       if (cached?.type === 'RECOMMENDATIONS_READY') {
-        recommendations = cached.result.recommendations;
+        recommendations = await filterBlockedFilms(cached.result.recommendations, maxRecommendationsSetting);
         sourceWarnings = cached.result.sourceErrors ?? [];
         recommendationGeneratedAt = cached.result.generatedAt;
         recommendationSeedCount = cached.result.seedCount;
@@ -177,7 +186,7 @@
             error = result.error;
             await clearPendingGeneration();
           } else if (result?.type === 'RECOMMENDATIONS_READY') {
-            recommendations = result.result.recommendations;
+            recommendations = await filterBlockedFilms(result.result.recommendations, maxRecommendationsSetting);
             sourceWarnings = result.result.sourceErrors ?? [];
             recommendationGeneratedAt = result.result.generatedAt;
             recommendationSeedCount = result.result.seedCount;
@@ -213,7 +222,7 @@
         error = result.error;
         await clearPendingGeneration();
       } else if (result.type === 'RECOMMENDATIONS_READY') {
-        recommendations = result.result.recommendations;
+        recommendations = await filterBlockedFilms(result.result.recommendations, maxRecommendationsSetting);
         sourceWarnings = result.result.sourceErrors ?? [];
         recommendationGeneratedAt = result.result.generatedAt;
         recommendationSeedCount = result.result.seedCount;
@@ -480,6 +489,44 @@
     }
   }
 
+  async function filterBlockedFilms(recs: Recommendation[], maxCount: number): Promise<Recommendation[]> {
+    const blocklist = await chrome.runtime.sendMessage({ type: 'GET_BLOCKLIST' });
+    if (!Array.isArray(blocklist) || blocklist.length === 0) return recs.slice(0, maxCount);
+    const blockedSet = new Set(blocklist.map((f: { tmdbId: number }) => f.tmdbId));
+    return recs.filter(r => !blockedSet.has(r.tmdbId)).slice(0, maxCount);
+  }
+
+  function showBlockToast(filmTitle: string) {
+    toastMessage = `${filmTitle} hidden from future recommendations`;
+    toastVisible = true;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toastVisible = false;
+      toastTimer = null;
+    }, 3000);
+  }
+
+  async function blockFilm(e: MouseEvent, rec: Recommendation) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    blockingTmdbId = rec.tmdbId;
+    showBlockToast(rec.title);
+
+    await new Promise(resolve => setTimeout(resolve, 250));
+
+    recommendations = recommendations.filter(r => r.tmdbId !== rec.tmdbId);
+    blockingTmdbId = null;
+
+    chrome.runtime.sendMessage({
+      type: 'BLOCK_FILM',
+      tmdbId: rec.tmdbId,
+      title: rec.title,
+      year: rec.year,
+      posterPath: rec.posterPath,
+    });
+  }
+
   // Load on mount — preload from local storage for instant UI, then full load via service worker
   preloadCachedState();
   loadSettings();
@@ -676,6 +723,7 @@
               class:score-high-card={scoreBand(rec.score) === 'high'}
               class:score-mid-card={scoreBand(rec.score) === 'mid'}
               class:score-low-card={scoreBand(rec.score) === 'low'}
+              class:blocking={blockingTmdbId === rec.tmdbId}
               href={recLetterboxdUrl(rec)}
               target="_blank"
               rel="noopener"
@@ -697,6 +745,16 @@
                     </svg>
                   </div>
                 {/if}
+                <button
+                  class="block-btn tip"
+                  onclick={(e: MouseEvent) => blockFilm(e, rec)}
+                  data-tip="Hide this film"
+                  aria-label="Hide this film"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  </svg>
+                </button>
               </div>
               <div class="rec-info">
                 <div class="rec-title-row">
@@ -774,6 +832,15 @@
               {/if}
             </a>
           {/each}
+        </div>
+      {/if}
+
+      {#if toastVisible}
+        <div class="toast">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M20 6L9 17l-5-5" stroke="#00E054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>{toastMessage}</span>
         </div>
       {/if}
     </main>
@@ -1518,5 +1585,79 @@
     border-top-color: #789;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
+  }
+
+  /* ── Block button ── */
+  .block-btn {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(13, 17, 23, 0.75);
+    color: #789;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+    z-index: 2;
+  }
+
+  .rec-card:hover .block-btn {
+    opacity: 1;
+  }
+
+  .block-btn:hover {
+    background: rgba(255, 80, 80, 0.25);
+    color: #f88;
+  }
+
+  /* ── Card blocking animation ── */
+  .rec-card.blocking {
+    opacity: 0;
+    max-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    transition: opacity 0.2s, max-height 0.2s 0.05s, margin 0.2s 0.05s, padding 0.2s 0.05s;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #1B2028;
+    border: 1px solid #2C3641;
+    border-radius: 10px;
+    color: #DEF;
+    font-size: 11px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    z-index: 100;
+    animation: toast-in 0.2s ease-out;
+    white-space: nowrap;
+    max-width: calc(100% - 32px);
+  }
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   }
 </style>
