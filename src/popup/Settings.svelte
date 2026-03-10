@@ -247,7 +247,7 @@
           <button
             class="seed-source-btn"
             class:active={seedSource === 'custom-list'}
-            onclick={() => { if (customListFilmCount) saveSeedSource('custom-list'); }}
+            onclick={() => saveSeedSource('custom-list')}
           >
             Custom list
           </button>
@@ -270,29 +270,28 @@
         {:else}
           <div class="custom-list-input-row" style="margin-top: 8px;">
             <input
-              type="url"
+              type="text"
               class="custom-list-input"
-              placeholder="https://letterboxd.com/user/list/name/"
+              placeholder="letterboxd.com/user/list/name"
               bind:value={customListUrl}
               onkeydown={(e: KeyboardEvent) => { if (e.key === 'Enter') scrapeCustomList(); }}
             />
             <button
-              class="btn btn-secondary btn-sm"
+              class="custom-list-scan-btn"
               onclick={scrapeCustomList}
               disabled={customListLoading || !customListUrl.trim()}
             >
               {customListLoading ? '...' : 'Scan'}
             </button>
           </div>
-          {#if customListFilmCount !== null}
-            <p class="slider-hint custom-list-ok">
+          {#if customListStatus}
+            <p class="custom-list-status" class:custom-list-error={customListStatus.startsWith('Invalid') || customListStatus.startsWith('Could not') || customListStatus.startsWith('Failed')}>{customListStatus}</p>
+          {:else if customListFilmCount !== null}
+            <p class="slider-hint">
               Using {customListFilmCount} film{customListFilmCount !== 1 ? 's' : ''} from list (max 30)
             </p>
           {:else}
             <p class="slider-hint">Paste a Letterboxd list URL to use as seed films</p>
-          {/if}
-          {#if customListStatus}
-            <p class="custom-list-status">{customListStatus}</p>
           {/if}
         {/if}
       </div>
@@ -1074,6 +1073,7 @@
 
   .custom-list-input {
     flex: 1;
+    min-width: 0;
     padding: 7px 10px;
     border: 1px solid #2C3641;
     border-radius: 6px;
@@ -1088,13 +1088,37 @@
     border-color: #4D7A96;
   }
 
-  .custom-list-ok {
-    color: #00E054;
+  .custom-list-scan-btn {
+    flex-shrink: 0;
+    padding: 7px 14px;
+    border: 1px solid #2C3641;
+    border-radius: 6px;
+    background: #2C3440;
+    color: #9AB;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .custom-list-scan-btn:hover:not(:disabled) {
+    background: #3C4450;
+    color: #DEF;
+  }
+
+  .custom-list-scan-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 
   .custom-list-status {
     margin: 2px 0 0;
     font-size: 9px;
-    color: #00E054;
+    color: #567;
+  }
+
+  .custom-list-error {
+    color: #f88;
   }
 </style>
