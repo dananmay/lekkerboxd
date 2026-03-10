@@ -7,6 +7,14 @@
   import { getSettings } from '../lib/storage/settings-store';
   import { getProfile as getProfileDirect } from '../lib/storage/profile-store';
   import { getCachedRecommendations } from '../lib/storage/cache-store';
+  import { isStoreDistribution } from '../lib/config/distribution';
+  import {
+    getReviewPromptState,
+    incrementGenerationCount,
+    incrementFilmClickCount,
+    dismissReviewPrompt,
+    completeReviewPrompt,
+  } from '../lib/storage/review-prompt-store';
   type ServiceHealth = { status: 'normal' | 'degraded'; reason: string | null; updatedAt: number };
 
   let showSettings = $state(false);
@@ -43,6 +51,9 @@
   let toastMessage = $state('');
   let toastVisible = $state(false);
   let toastTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Review prompt state
+  let showReviewBanner = $state(false);
 
   function startRecommendationLoading(): void {
     loading = true;
@@ -106,6 +117,18 @@
       recommendationGeneratedAt = cached.generatedAt;
       recommendationSeedCount = cached.seedCount;
     }
+
+    checkReviewPrompt(); // fire-and-forget — never blocks preload
+  }
+
+  async function checkReviewPrompt(): Promise<void> {
+    if (!isStoreDistribution()) return;
+    const state = await getReviewPromptState();
+    if (state.completed) return;
+    if (state.generationCount < 3) return;
+    if (state.filmClickCount < 1) return;
+    if (state.lastDismissedAt && Date.now() - state.lastDismissedAt < 14 * 24 * 60 * 60 * 1000) return;
+    showReviewBanner = true;
   }
 
   async function loadSettings() {
@@ -226,6 +249,7 @@
         sourceWarnings = result.result.sourceErrors ?? [];
         recommendationGeneratedAt = result.result.generatedAt;
         recommendationSeedCount = result.result.seedCount;
+        incrementGenerationCount(); // fire-and-forget for review prompt
         await clearPendingGeneration();
       }
     } catch (e) {
@@ -428,6 +452,7 @@
   async function openLetterboxdFilm(e: MouseEvent, rec: Recommendation): Promise<void> {
     e.preventDefault();
     e.stopPropagation();
+    incrementFilmClickCount(); // fire-and-forget for review prompt
 
     const fallbackUrl = recLetterboxdUrl(rec);
     const slug = extractSlugFromUrl(fallbackUrl);
@@ -524,6 +549,19 @@
       title: rec.title,
       year: rec.year,
       posterPath: rec.posterPath,
+    });
+  }
+
+  async function dismissReviewBanner() {
+    showReviewBanner = false;
+    await dismissReviewPrompt();
+  }
+
+  async function openReviewPage() {
+    showReviewBanner = false;
+    await completeReviewPrompt();
+    chrome.tabs.create({
+      url: `https://chromewebstore.google.com/detail/${chrome.runtime.id}/reviews`,
     });
   }
 
@@ -832,6 +870,18 @@
               {/if}
             </a>
           {/each}
+        </div>
+      {/if}
+
+      {#if showReviewBanner}
+        <div class="review-banner">
+          <span class="review-text">Enjoying Lekkerboxd? A quick review helps other film fans find it.</span>
+          <button class="review-link" onclick={openReviewPage}>Review on Chrome Web Store</button>
+          <button class="review-dismiss" onclick={dismissReviewBanner} aria-label="Dismiss">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
       {/if}
 
@@ -1659,5 +1709,57 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+  }
+
+  /* ── Review prompt banner ── */
+  .review-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin: 8px 0 0;
+    background: #161B22;
+    border: 1px solid #2C3641;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #9AB;
+  }
+
+  .review-text {
+    flex: 1;
+    line-height: 1.4;
+  }
+
+  .review-link {
+    background: none;
+    border: none;
+    color: #00E054;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+
+  .review-link:hover {
+    background: rgba(0, 224, 84, 0.1);
+  }
+
+  .review-dismiss {
+    background: none;
+    border: none;
+    color: #567;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s;
+  }
+
+  .review-dismiss:hover {
+    color: #9AB;
   }
 </style>

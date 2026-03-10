@@ -11,6 +11,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - Manage blocked films section in Settings with poster thumbnails and one-click unblock.
 - Toast notification when a film is blocked.
 - Over-generation buffer (+10) so blocking films does not reduce the visible recommendation count below the user's setting.
+- Non-intrusive Chrome Web Store review prompt banner shown after 3+ recommendation generations and 1+ film click-through (Store builds only). Dismissable with 14-day cooldown; permanently hidden after 3 dismisses or clicking the review link.
 
 ### Changed
 - None yet.
